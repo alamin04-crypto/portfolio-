@@ -1,0 +1,1027 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>Admin Panel — Al Amin Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#f2f3f0; --surface:#ffffff; --surface2:#e9ebe6; --ink:#17211b; --ink2:#4c5a51;
+    --line:#d6dad2; --accent:#0d7a4c; --accent-ink:#ffffff; --accent-soft:#e2f2e9;
+    --warn:#9a6206; --warn-bg:#fdf1d7; --danger:#b3261e; --danger-bg:#fbe7e5;
+    --ok:#0d7a4c; --ok-bg:#e2f2e9; --radius:10px;
+    --shadow:0 1px 2px rgba(20,30,24,.06),0 8px 24px -18px rgba(20,30,24,.35);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#10140f; --surface:#181d17; --surface2:#20261f; --ink:#e8ede6; --ink2:#a7b3a6;
+      --line:#2c332b; --accent:#2fbf71; --accent-ink:#0b140e; --accent-soft:#173527;
+      --warn:#e8b34b; --warn-bg:#3a2d10; --danger:#ff8a80; --danger-bg:#3d1c19;
+      --ok:#2fbf71; --ok-bg:#173527;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -18px rgba(0,0,0,.8);
+    }
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Hind Siliguri",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    font-size:16px;line-height:1.5}
+  button{font:inherit;cursor:pointer}
+  input,textarea,select{font:inherit;color:var(--ink)}
+  a{color:var(--accent)}
+
+  /* ---------- Gate ---------- */
+  .gate{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
+    background:var(--bg);padding:20px}
+  .gate-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    box-shadow:var(--shadow);max-width:420px;width:100%;padding:28px 26px}
+  .gate-card h1{font-size:22px;margin:0 0 4px}
+  .gate-card p.sub{color:var(--ink2);margin:0 0 18px;font-size:15px}
+  .gate-card label{display:block;font-weight:600;font-size:14px;margin:14px 0 6px}
+  .gate-err{display:none;background:var(--danger-bg);color:var(--danger);border-radius:8px;
+    padding:9px 12px;font-size:14px;margin-top:14px}
+  .note-box{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:11px 13px;
+    font-size:13.5px;margin-top:18px;line-height:1.55}
+  .note-box strong{color:inherit}
+
+  /* ---------- Top bar ---------- */
+  .topbar{position:sticky;top:0;z-index:40;background:var(--surface);
+    border-bottom:1px solid var(--line)}
+  .topbar-in{max-width:1060px;margin:0 auto;padding:10px 16px;display:flex;flex-wrap:wrap;
+    align-items:center;gap:10px}
+  .brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:9px}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);flex:none}
+  .status-pill{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;
+    padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface2)}
+  .status-pill .sd{width:8px;height:8px;border-radius:50%;background:#9aa39a;flex:none}
+  .status-pill.live{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+  .status-pill.live .sd{background:var(--ok)}
+  .status-pill.err{background:var(--danger-bg);color:var(--danger);border-color:transparent}
+  .status-pill.err .sd{background:var(--danger)}
+  .btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);
+    border-radius:8px;padding:8px 14px;font-weight:600;font-size:14.5px;line-height:1.2}
+  .btn:hover{border-color:var(--ink2)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .btn.primary:hover{filter:brightness(1.07)}
+  .btn.small{padding:5px 10px;font-size:13px}
+  .btn.danger{color:var(--danger)}
+  .btn:disabled{opacity:.55;cursor:wait}
+  .dirty-flag{font-size:13px;color:var(--warn);font-weight:600;display:none}
+
+  main{max-width:1060px;margin:0 auto;padding:18px 16px 90px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:20px;margin-bottom:18px}
+  .card > h2{font-size:19px;margin:0 0 2px}
+  .card > .hint{color:var(--ink2);font-size:14px;margin:0 0 16px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:640px){.grid2{grid-template-columns:1fr}}
+  .field label{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:4px;
+    letter-spacing:.01em}
+  .field input[type=text],.field input[type=url],.field input[type=email],.field input[type=tel],
+  .field input[type=number],.field textarea,.field select{
+    width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;
+    padding:9px 11px;font-size:15px}
+  .field textarea{resize:vertical;min-height:64px}
+  .field input:focus,.field textarea:focus,.field select:focus{outline:2px solid var(--accent);
+    outline-offset:0;border-color:transparent}
+  .field .sub-hint{font-size:12.5px;color:var(--ink2);margin-top:3px}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media (max-width:560px){.pair{grid-template-columns:1fr}}
+  .pair .tag-en::after{content:" · EN";color:var(--accent);font-weight:700}
+  .pair .tag-bn::after{content:" · বাংলা";color:var(--accent);font-weight:700}
+
+  /* list items */
+  .items{display:flex;flex-direction:column;gap:12px}
+  .item{border:1px solid var(--line);border-radius:var(--radius);padding:14px;background:var(--surface)}
+  .item-head{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+  .item-head .num{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink2);
+    background:var(--surface2);border-radius:6px;padding:2px 8px;margin-right:auto}
+  .icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:7px;
+    width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;
+    font-size:15px;color:var(--ink2);padding:0}
+  .icon-btn:hover{color:var(--ink);border-color:var(--ink2)}
+  .icon-btn.del:hover{color:var(--danger);border-color:var(--danger)}
+  .add-row{margin-top:12px}
+  .switch-row{display:flex;align-items:center;gap:9px;font-size:14.5px;font-weight:600}
+  .switch-row input{width:19px;height:19px;accent-color:var(--accent)}
+  .thumb{margin-top:8px;border:1px solid var(--line);border-radius:8px;max-width:220px;
+    width:100%;display:block;background:var(--surface2)}
+  .thumb-empty{font-size:13px;color:var(--ink2);margin-top:6px}
+  .upload-status{font-size:13px;margin-top:6px;min-height:18px}
+  .upload-status.ok{color:var(--ok)} .upload-status.warn{color:var(--warn)} .upload-status.err{color:var(--danger)}
+
+  /* profile tabs */
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .tab{border:1px solid var(--line);background:var(--surface);border-radius:999px;
+    padding:8px 16px;font-weight:600;font-size:15px}
+  .tab.active{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .subhead{font-size:16px;font-weight:700;margin:22px 0 4px;padding-top:16px;
+    border-top:1px dashed var(--line)}
+  .subhead:first-of-type{border-top:none;padding-top:2px;margin-top:4px}
+  .subhead + .hint{color:var(--ink2);font-size:13.5px;margin:0 0 12px}
+
+  details.setup summary{cursor:pointer;font-weight:700;font-size:16px}
+  details.setup{margin-top:4px}
+  .mono{font-family:"IBM Plex Mono",monospace;font-size:13px}
+  .status-line{font-size:14px;margin-top:10px}
+  .foot-note{color:var(--ink2);font-size:13.5px;text-align:center;margin:26px auto 0;max-width:640px}
+
+  .savebar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--surface);
+    border-top:1px solid var(--line);padding:10px 16px}
+  .savebar-in{max-width:1060px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .savebar .msg{font-size:14px;color:var(--ink2);margin-right:auto}
+  .savebar .msg.ok{color:var(--ok);font-weight:600}
+  .savebar .msg.err{color:var(--danger);font-weight:600}
+
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:84px;z-index:70;
+    background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:10px;font-weight:600;
+    font-size:15px;box-shadow:var(--shadow);display:none;max-width:92vw;text-align:center}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+
+<!-- ================= PASSCODE GATE ================= -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <h1 id="gateTitle">Admin Panel</h1>
+    <p class="sub" id="gateSub">Enter your passcode to open the editor.</p>
+    <div id="gateSet" class="hidden">
+      <label for="passNew">New passcode / নতুন পাসকোড</label>
+      <input type="password" id="passNew" autocomplete="new-password"
+        style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px" />
+      <label for="passConfirm">Confirm passcode / আবার লিখুন</label>
+      <input type="password" id="passConfirm" autocomplete="new-password"
+        style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px" />
+      <button class="btn primary" id="btnSetPass" style="width:100%;margin-top:18px">Set passcode &amp; open / পাসকোড সেট করুন</button>
+    </div>
+    <div id="gateUnlock" class="hidden">
+      <label for="passEnter">Passcode / পাসকোড</label>
+      <input type="password" id="passEnter" autocomplete="current-password"
+        style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px" />
+      <button class="btn primary" id="btnUnlock" style="width:100%;margin-top:18px">Unlock / খুলুন</button>
+    </div>
+    <div class="gate-err" id="gateErr"></div>
+    <div class="note-box">
+      <strong>Honest note:</strong> this passcode is basic browser-level protection only — it is
+      <strong>not</strong> server authentication. Anyone who finds this page's address can open the
+      page itself, so <strong>keep this admin site's URL private and never share it publicly</strong>.
+      Real protection comes from your Firebase Realtime Database rules.
+      <br />এই পাসকোড শুধু সাধারণ সুরক্ষা — এই সাইটের লিংক কারো সাথে শেয়ার করবেন না।
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app" class="hidden">
+  <div class="topbar">
+    <div class="topbar-in">
+      <div class="brand"><span class="dot"></span>Portfolio Admin</div>
+      <span class="status-pill" id="statusPill"><span class="sd"></span><span id="statusText">Connecting…</span></span>
+      <button class="btn small hidden" id="btnRetryLib" type="button">Retry connection / আবার চেষ্টা করুন</button>
+      <span class="dirty-flag" id="dirtyFlag">● Unsaved changes</span>
+      <button class="btn small" id="btnLang">বাংলা</button>
+      <button class="btn small" id="btnReload">Reload from Firebase</button>
+      <button class="btn small" id="btnLock">Lock</button>
+    </div>
+  </div>
+
+  <main id="editor">
+    <!-- Preview link -->
+    <section class="card">
+      <h2 data-i18n="previewH">Main portfolio site</h2>
+      <p class="hint" data-i18n="previewHint">Paste your live portfolio address here to preview it. This admin site is separate — the portfolio itself has no admin button and never links here.</p>
+      <div class="grid2">
+        <div class="field">
+          <label>Portfolio URL</label>
+          <input type="url" data-bind="settings.siteUrl" placeholder="https://alamin04-crypto.github.io/al-amin-portfolio/" />
+        </div>
+        <div class="field" style="display:flex;align-items:flex-end;gap:8px">
+          <button class="btn" id="btnPreview" type="button">Open main site ↗</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hero -->
+    <section class="card">
+      <h2 data-i18n="heroH">Hero / headline area</h2>
+      <p class="hint" data-i18n="heroHint">Name, title and intro shown at the top of the portfolio. Fill both English and বাংলা — the main site's language switch uses these.</p>
+      <div class="pair">
+        <div class="field"><label class="tag-en">Name</label><input type="text" data-bind="hero.name.en" /></div>
+        <div class="field"><label class="tag-bn">নাম</label><input type="text" data-bind="hero.name.bn" /></div>
+      </div>
+      <div class="pair" style="margin-top:12px">
+        <div class="field"><label class="tag-en">Title / roles line</label><input type="text" data-bind="hero.title.en" /></div>
+        <div class="field"><label class="tag-bn">টাইটেল</label><input type="text" data-bind="hero.title.bn" /></div>
+      </div>
+      <div class="pair" style="margin-top:12px">
+        <div class="field"><label class="tag-en">Bio</label><textarea data-bind="hero.bio.en"></textarea></div>
+        <div class="field"><label class="tag-bn">পরিচিতি</label><textarea data-bind="hero.bio.bn"></textarea></div>
+      </div>
+      <h3 class="subhead" data-i18n="statsH">Stat cards</h3>
+      <p class="hint" data-i18n="statsHint">Short numbers shown on the hero, e.g. “3+ Years experience”.</p>
+      <div class="items" id="list-stats"></div>
+      <div class="add-row"><button class="btn small" data-add="hero.stats" type="button">+ Add stat</button></div>
+    </section>
+
+    <!-- Contact -->
+    <section class="card">
+      <h2 data-i18n="contactH">Contact details</h2>
+      <p class="hint" data-i18n="contactHint">Shown when a visitor taps Contact on the main site.</p>
+      <div class="grid2">
+        <div class="field"><label>Phone / WhatsApp</label><input type="tel" data-bind="contact.phone" /></div>
+        <div class="field"><label>Email</label><input type="email" data-bind="contact.email" /></div>
+        <div class="field"><label>Telegram (username or link)</label><input type="text" data-bind="contact.telegram" /></div>
+        <div class="field"><label>Fiverr profile link</label><input type="url" data-bind="contact.fiverr" placeholder="https://www.fiverr.com/…" /></div>
+      </div>
+      <div class="pair" style="margin-top:12px">
+        <div class="field"><label class="tag-en">Location</label><input type="text" data-bind="contact.location.en" /></div>
+        <div class="field"><label class="tag-bn">ঠিকানা / এলাকা</label><input type="text" data-bind="contact.location.bn" /></div>
+      </div>
+    </section>
+
+    <!-- Banners -->
+    <section class="card">
+      <h2 data-i18n="bannerH">Headline / banner items</h2>
+      <p class="hint" data-i18n="bannerHint">Announcements shown as a rotating banner on the main site — one at a time, changing every 5 seconds with a fade/slide, looping in this list's order (hover/tap pauses it). Add text, an optional image and link, switch each one on or off, and use ↑ ↓ to change the rotation order.</p>
+      <div class="items" id="list-banners"></div>
+      <div class="add-row"><button class="btn small" data-add="banners" type="button">+ Add banner</button></div>
+    </section>
+
+    <!-- Profiles -->
+    <section class="card">
+      <h2 data-i18n="profilesH">The three profiles</h2>
+      <p class="hint" data-i18n="profilesHint">Each profile keeps its own Experience, Education, Skills, Languages and Work Samples.</p>
+      <div class="tabs" id="profileTabs">
+        <button class="tab active" data-profile="support" type="button">Customer Support</button>
+        <button class="tab" data-profile="media" type="button">Media Buyer</button>
+        <button class="tab" data-profile="video" type="button">Video Editor</button>
+      </div>
+      <div id="profileEditor"></div>
+    </section>
+
+    <!-- Firebase setup -->
+    <section class="card">
+      <details class="setup">
+        <summary>Firebase Setup</summary>
+        <p class="hint" style="margin-top:10px">Your Firebase config is built in and connects automatically. Change it only if you move to a different Firebase project. The database URL is derived from the project and can be edited if your database lives in another region.</p>
+        <div class="field">
+          <label>Firebase config (JSON)</label>
+          <textarea id="cfgJson" class="mono" rows="9" spellcheck="false"></textarea>
+        </div>
+        <div class="field" style="margin-top:10px">
+          <label>Database URL</label>
+          <input type="url" id="cfgDbUrl" class="mono" spellcheck="false" />
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" id="btnReconnect" type="button">Save config &amp; reconnect</button>
+          <button class="btn" id="btnResetCfg" type="button">Reset to built-in config</button>
+        </div>
+        <div class="status-line" id="setupStatus"></div>
+      </details>
+      <details class="setup" style="margin-top:14px">
+        <summary>Change passcode</summary>
+        <div class="grid2" style="margin-top:12px">
+          <div class="field"><label>New passcode</label><input type="password" id="newPass1" autocomplete="new-password" /></div>
+          <div class="field"><label>Confirm new passcode</label><input type="password" id="newPass2" autocomplete="new-password" /></div>
+        </div>
+        <div style="margin-top:12px"><button class="btn" id="btnChangePass" type="button">Change passcode</button></div>
+        <div class="status-line" id="passStatus"></div>
+      </details>
+    </section>
+
+    <p class="foot-note" data-i18n="footNote">Saving writes everything to Firebase (portfolio/content). The main portfolio reads the same place and updates in real time for every visitor — no need to re-upload the portfolio file.</p>
+  </main>
+
+  <div class="savebar">
+    <div class="savebar-in">
+      <span class="msg" id="saveMsg">Connected edits are not live until you save.</span>
+      <button class="btn" id="btnReload2" type="button">Discard &amp; reload</button>
+      <button class="btn primary" id="btnSave" type="button">Save to Firebase</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase library is loaded by the script below with CDN fallbacks + retry,
+     so one blocked/slow CDN no longer leaves the panel stuck on an error. -->
+<script>
+(function(){
+"use strict";
+
+/* ================= Built-in Firebase config ================= */
+var BUILTIN_CONFIG = {
+  apiKey: "AIzaSyANReFZMx_KfakO6YivXSUpvbPga5tIG-M",
+  authDomain: "portfolio-alamin-19cee.firebaseapp.com",
+  databaseURL: "https://portfolio-alamin-19cee-default-rtdb.firebaseio.com",
+  projectId: "portfolio-alamin-19cee",
+  storageBucket: "portfolio-alamin-19cee.firebasestorage.app",
+  messagingSenderId: "768470584742",
+  appId: "1:768470584742:web:acd1d886f999c80eef9367",
+  measurementId: "G-0DTQECSG07"
+};
+var LS_CFG = "adminPanel.firebaseConfig";
+var LS_PASS = "adminPanel.passcodeHash";
+var NODE = "portfolio/content";
+
+/* ================= Default content (used only when the database node is empty) ================= */
+function L(en, bn){ return { en: en || "", bn: bn || "" }; }
+function blankSample(){ return { title: L("",""), desc: L("",""), kind: "photo", image: "", video: "" }; }
+function blankProfile(titleEn, titleBn){
+  return { title: L(titleEn, titleBn), tagline: L("",""),
+    experience: [], education: [], skills: [], languages: [], samples: [] };
+}
+function defaultContent(){
+  return {
+    settings: { siteUrl: "" },
+    hero: {
+      name: L("Al Amin", "আল আমিন"),
+      title: L("Customer Support Specialist · Media Buyer · Video Editor",
+              "কাস্টমার সাপোর্ট স্পেশালিস্ট · মিডিয়া বায়ার · ভিডিও এডিটর"),
+      bio: L("Former Bangladesh Army member (2022–2025) bringing discipline, speed and care to customer support, ad campaigns and video editing for online businesses.",
+             "সাবেক বাংলাদেশ আর্মি সদস্য (২০২২–২০২৫) — শৃঙ্খলা, গতি আর যত্ন নিয়ে অনলাইন ব্যবসার জন্য কাস্টমার সাপোর্ট, অ্যাড ক্যাম্পেইন ও ভিডিও এডিটিং সার্ভিস দিই।"),
+      stats: [
+        { value: "3+", label: L("Years of support experience", "বছরের সাপোর্ট অভিজ্ঞতা") },
+        { value: "130+", label: L("Vertical videos edited per week", "সপ্তাহে এডিট করা ভার্টিকাল ভিডিও") },
+        { value: "3", label: L("Languages — Bangla, English, Hindi", "ভাষা — বাংলা, ইংরেজি, হিন্দি") }
+      ]
+    },
+    contact: {
+      phone: "", email: "", telegram: "", fiverr: "",
+      location: L("Bangladesh", "বাংলাদেশ")
+    },
+    banners: [],
+    profiles: {
+      support: Object.assign(blankProfile("Customer Support", "কাস্টমার সাপোর্ট"), {
+        tagline: L("Live chat & email support in Bangla, English and Hindi — Zendesk, LiveChat, Jira, Slack, Chatwoot.",
+                   "বাংলা, ইংরেজি ও হিন্দিতে লাইভ চ্যাট ও ইমেইল সাপোর্ট — Zendesk, LiveChat, Jira, Slack, Chatwoot।"),
+        experience: [
+          { role: L("Customer Support Executive","কাস্টমার সাপোর্ট এক্সিকিউটিভ"), company: "Online Customer Support Team", period: "", desc: L("Live chat and email support for online customers, order and service queries handled end to end.","") },
+          { role: L("Customer Support","কাস্টমার সাপোর্ট"), company: "Robi", period: "", desc: L("Customer care support for telecom subscribers.","") },
+          { role: L("Customer Support","কাস্টমার সাপোর্ট"), company: "KFC", period: "", desc: L("Customer service and order support.","") },
+          { role: L("Customer Support","কাস্টমার সাপোর্ট"), company: "Daraz", period: "", desc: L("Seller and buyer support for e-commerce orders.","") }
+        ],
+        education: [
+          { title: L("BBS (ongoing)","বিবিএস (চলমান)"), place: "Chandpur Govt. College", period: "", note: L("","") }
+        ],
+        skills: [
+          { name: L("Live chat support","লাইভ চ্যাট সাপোর্ট"), level: 95 },
+          { name: L("Email support","ইমেইল সাপোর্ট"), level: 92 },
+          { name: L("Zendesk / LiveChat","Zendesk / LiveChat"), level: 90 },
+          { name: L("Jira / Slack / Chatwoot","Jira / Slack / Chatwoot"), level: 88 }
+        ],
+        languages: [
+          { name: L("Bangla","বাংলা"), level: L("Native","মাতৃভাষা") },
+          { name: L("English","ইংরেজি"), level: L("Fluent","সাবলীল") },
+          { name: L("Hindi","হিন্দি"), level: L("Conversational","কথোপকথন পর্যায়") }
+        ],
+        samples: []
+      }),
+      media: Object.assign(blankProfile("Media Buyer", "মিডিয়া বায়ার"), {
+        tagline: L("Facebook & Google ads with Pixel, Conversion API and GA4 tracking — planned, launched and optimised.",
+                   "Pixel, Conversion API ও GA4 ট্র্যাকিংসহ Facebook ও Google অ্যাড — পরিকল্পনা, লঞ্চ ও অপটিমাইজেশন।"),
+        experience: [
+          { role: L("Media Buyer","মিডিয়া বায়ার"), company: "BKash", period: "", desc: L("Paid campaign planning and optimisation.","") },
+          { role: L("Media Buyer","মিডিয়া বায়ার"), company: "Daraz", period: "", desc: L("E-commerce ad campaigns and budget optimisation.","") }
+        ],
+        education: [
+          { title: L("BBS (ongoing)","বিবিএস (চলমান)"), place: "Chandpur Govt. College", period: "", note: L("","") }
+        ],
+        skills: [
+          { name: L("Facebook Ads Manager","Facebook Ads Manager"), level: 92 },
+          { name: L("Google / YouTube Ads","Google / YouTube Ads"), level: 85 },
+          { name: L("Pixel & Conversion API","Pixel ও Conversion API"), level: 90 },
+          { name: L("GA4 analytics","GA4 অ্যানালিটিক্স"), level: 84 }
+        ],
+        languages: [
+          { name: L("Bangla","বাংলা"), level: L("Native","মাতৃভাষা") },
+          { name: L("English","ইংরেজি"), level: L("Fluent","সাবলীল") }
+        ],
+        samples: []
+      }),
+      video: Object.assign(blankProfile("Video Editor", "ভিডিও এডিটর"), {
+        tagline: L("Premiere Pro editing for shorts, ads and promos — fast turnaround, clean cuts, captions and sound design.",
+                   "শর্টস, অ্যাড ও প্রোমোর জন্য Premiere Pro এডিটিং — দ্রুত ডেলিভারি, পরিষ্কার কাট, ক্যাপশন ও সাউন্ড ডিজাইন।"),
+        experience: [
+          { role: L("Junior Content Maker","জুনিয়র কনটেন্ট মেকার"), company: "", period: "", desc: L("130+ vertical videos edited per week for social media.","সপ্তাহে ১৩০+ ভার্টিকাল ভিডিও এডিট সোশ্যাল মিডিয়ার জন্য।") },
+          { role: L("Video Editor","ভিডিও এডিটর"), company: "Kureghor", period: "", desc: L("","") },
+          { role: L("Video Editor","ভিডিও এডিটর"), company: "BKash", period: "", desc: L("","") },
+          { role: L("Video Editor","ভিডিও এডিটর"), company: "SportZone", period: "", desc: L("","") }
+        ],
+        education: [
+          { title: L("BBS (ongoing)","বিবিএস (চলমান)"), place: "Chandpur Govt. College", period: "", note: L("","") }
+        ],
+        skills: [
+          { name: L("Adobe Premiere Pro","Adobe Premiere Pro"), level: 93 },
+          { name: L("Short-form / vertical video","শর্ট-ফর্ম / ভার্টিকাল ভিডিও"), level: 95 },
+          { name: L("Captions & subtitles","ক্যাপশন ও সাবটাইটেল"), level: 90 },
+          { name: L("Sound design & SFX","সাউন্ড ডিজাইন ও SFX"), level: 86 }
+        ],
+        languages: [
+          { name: L("Bangla","বাংলা"), level: L("Native","মাতৃভাষা") },
+          { name: L("English","ইংরেজি"), level: L("Fluent","সাবলীল") }
+        ],
+        samples: [
+          { title: L("AI Advanced Course — promo","AI Advanced Course — প্রোমো"), desc: L("29s course promo video","২৯ সেকেন্ডের কোর্স প্রোমো ভিডিও"), kind: "video", image: "", video: "" },
+          { title: L("Premium men's watch — ad","প্রিমিয়াম পুরুষদের ঘড়ি — অ্যাড"), desc: L("60s product advertisement","৬০ সেকেন্ডের প্রোডাক্ট অ্যাড"), kind: "video", image: "", video: "" },
+          { title: L("Watch motion graphics","ঘড়ির মোশন গ্রাফিক্স"), desc: L("20s motion graphics video","২০ সেকেন্ডের মোশন গ্রাফিক্স ভিডিও"), kind: "video", image: "", video: "" },
+          { title: L("কাগজের নৌকা — Ghibli short","কাগজের নৌকা — Ghibli শর্ট"), desc: L("68s animated short story","৬৮ সেকেন্ডের অ্যানিমেটেড গল্প"), kind: "video", image: "", video: "" },
+          { title: L("ঢাকার অদৃশ্য নায়ক — mini documentary","ঢাকার অদৃশ্য নায়ক — মিনি ডকুমেন্টারি"), desc: L("49s mini documentary","৪৯ সেকেন্ডের মিনি ডকুমেন্টারি"), kind: "video", image: "", video: "" }
+        ]
+      })
+    }
+  };
+}
+
+/* Deep-merge loaded data over defaults so missing fields never break the editor */
+function merge(base, over){
+  if (Array.isArray(base)) return Array.isArray(over) ? over : base;
+  if (base && typeof base === "object"){
+    var out = {};
+    Object.keys(base).forEach(function(k){
+      out[k] = (over && typeof over === "object" && k in over) ? merge(base[k], over[k]) : base[k];
+    });
+    if (over && typeof over === "object"){
+      Object.keys(over).forEach(function(k){ if (!(k in out)) out[k] = over[k]; });
+    }
+    return out;
+  }
+  return (over === undefined || over === null) ? base : over;
+}
+
+/* ================= State ================= */
+var content = defaultContent();
+var dirty = false;
+var currentProfile = "support";
+var db = null, storage = null, connected = false;
+
+/* ================= Tiny helpers ================= */
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s == null ? "" : s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function getPath(obj, path){
+  return path.split(".").reduce(function(o,k){ return (o == null ? o : o[k]); }, obj);
+}
+function setPath(obj, path, val){
+  var parts = path.split("."), last = parts.pop();
+  var target = parts.reduce(function(o,k){ return o[k]; }, obj);
+  target[last] = val;
+}
+function toast(msg, ms){
+  var t = $("toast"); t.textContent = msg; t.style.display = "block";
+  clearTimeout(t._h); t._h = setTimeout(function(){ t.style.display = "none"; }, ms || 3200);
+}
+function markDirty(){
+  dirty = true; $("dirtyFlag").style.display = "inline";
+  var m = $("saveMsg"); m.className = "msg"; m.textContent = "Unsaved changes — press Save to publish.";
+}
+function markClean(msg){
+  dirty = false; $("dirtyFlag").style.display = "none";
+  var m = $("saveMsg"); m.className = "msg ok"; m.textContent = msg || "All changes saved.";
+}
+
+/* ================= Passcode gate ================= */
+function sha256(str){
+  if (window.crypto && crypto.subtle){
+    return crypto.subtle.digest("SHA-256", new TextEncoder().encode(str)).then(function(buf){
+      return Array.prototype.map.call(new Uint8Array(buf), function(b){
+        return ("0" + b.toString(16)).slice(-2); }).join("");
+    });
+  }
+  return Promise.resolve("plain:" + str); /* very old browser fallback */
+}
+function gateError(msg){ var e = $("gateErr"); e.textContent = msg; e.style.display = "block"; }
+function initGate(){
+  var stored = null;
+  try { stored = localStorage.getItem(LS_PASS); } catch(e){}
+  if (stored){ $("gateUnlock").classList.remove("hidden"); }
+  else { $("gateSet").classList.remove("hidden");
+    $("gateSub").textContent = "First time here — set a passcode for this browser."; }
+
+  $("btnSetPass").addEventListener("click", function(){
+    var a = $("passNew").value, b = $("passConfirm").value;
+    if (a.length < 4) return gateError("Passcode must be at least 4 characters. / কমপক্ষে ৪ অক্ষর দিন।");
+    if (a !== b) return gateError("Passcodes do not match. / পাসকোড মিলছে না।");
+    sha256(a).then(function(h){
+      try { localStorage.setItem(LS_PASS, h); } catch(e){}
+      openApp();
+    });
+  });
+  $("btnUnlock").addEventListener("click", tryUnlock);
+  $("passEnter").addEventListener("keydown", function(e){ if (e.key === "Enter") tryUnlock(); });
+  function tryUnlock(){
+    sha256($("passEnter").value).then(function(h){
+      var stored2 = null; try { stored2 = localStorage.getItem(LS_PASS); } catch(e){}
+      if (h === stored2) openApp();
+      else gateError("Wrong passcode. / ভুল পাসকোড।");
+    });
+  }
+}
+function openApp(){
+  $("gate").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  renderAll();
+  connectFirebase(loadConfig());
+}
+$("btnLock").addEventListener("click", function(){ location.reload(); });
+$("btnChangePass").addEventListener("click", function(){
+  var a = $("newPass1").value, b = $("newPass2").value, st = $("passStatus");
+  if (a.length < 4){ st.textContent = "At least 4 characters."; return; }
+  if (a !== b){ st.textContent = "Passcodes do not match."; return; }
+  sha256(a).then(function(h){
+    try { localStorage.setItem(LS_PASS, h); } catch(e){}
+    st.textContent = "Passcode changed for this browser.";
+    $("newPass1").value = ""; $("newPass2").value = "";
+  });
+});
+
+/* ================= Firebase ================= */
+function loadConfig(){
+  try {
+    var saved = localStorage.getItem(LS_CFG);
+    if (saved) return JSON.parse(saved);
+  } catch(e){}
+  return JSON.parse(JSON.stringify(BUILTIN_CONFIG));
+}
+function setStatus(state, text){
+  var pill = $("statusPill");
+  pill.className = "status-pill" + (state === "live" ? " live" : state === "err" ? " err" : "");
+  $("statusText").textContent = text;
+}
+/* ---- Firebase library loader with CDN fallbacks ----
+   One CDN failing (blocked, slow, or a dropped connection) used to leave
+   window.firebase undefined and the panel stuck on a permanent error.
+   Now each file is tried on gstatic, then cdnjs, then jsDelivr, with a
+   per-file timeout, and the top bar gets a Retry button if all fail. */
+var FB_FILES = ["firebase-app-compat", "firebase-database-compat", "firebase-storage-compat"];
+var FB_MIRRORS = [
+  function(f){ return "https://www.gstatic.com/firebasejs/10.12.5/" + f + ".js"; },
+  function(f){ return "https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.5/" + f + ".min.js"; },
+  function(f){ return "https://cdn.jsdelivr.net/npm/firebase@10.12.5/" + f + ".js"; }
+];
+function loadScriptOnce(src, timeoutMs){
+  return new Promise(function(resolve, reject){
+    var s = document.createElement("script");
+    var done = false;
+    var timer = setTimeout(function(){
+      if (done) return; done = true;
+      s.onload = s.onerror = null;
+      reject(new Error("Timed out loading " + src));
+    }, timeoutMs || 15000);
+    s.onload = function(){ if (done) return; done = true; clearTimeout(timer); resolve(); };
+    s.onerror = function(){ if (done) return; done = true; clearTimeout(timer); reject(new Error("Failed to load " + src)); };
+    s.src = src;
+    document.head.appendChild(s);
+  });
+}
+function firebaseLibReady(){
+  return !!(window.firebase && firebase.initializeApp && firebase.database);
+}
+function ensureFirebaseLib(){
+  if (firebaseLibReady()) return Promise.resolve(true);
+  var chain = Promise.resolve(false);
+  FB_MIRRORS.forEach(function(mirror){
+    chain = chain.then(function(ok){
+      if (ok || firebaseLibReady()) return true;
+      var p = Promise.resolve();
+      FB_FILES.forEach(function(f){
+        p = p.then(function(){ return loadScriptOnce(mirror(f)); });
+      });
+      return p.then(function(){ return firebaseLibReady(); })
+              .catch(function(){ return firebaseLibReady(); });
+    });
+  });
+  return chain;
+}
+
+function connectFirebase(cfg){
+  setStatus("", "Loading Firebase library…");
+  $("setupStatus").textContent = "";
+  ensureFirebaseLib().then(function(ok){
+    if (!ok){
+      setStatus("err", "Error · Firebase library failed to load — tap Retry");
+      $("setupStatus").textContent = "The Firebase library could not be loaded from any CDN mirror. " +
+        "Check your internet connection, then tap “Retry connection” in the top bar. " +
+        "ইন্টারনেট চেক করে উপরের Retry বোতামে চাপ দিন।";
+      $("btnRetryLib").classList.remove("hidden");
+      return;
+    }
+    $("btnRetryLib").classList.add("hidden");
+    setStatus("", "Connecting…");
+    var existing = null;
+    try { existing = firebase.app("adminPanel"); } catch(e){}
+    if (existing){
+      existing.delete().then(function(){ startApp(cfg); }).catch(function(){ startApp(cfg); });
+    } else {
+      startApp(cfg);
+    }
+  });
+}
+$("btnRetryLib").addEventListener("click", function(){
+  $("btnRetryLib").classList.add("hidden");
+  connectFirebase(loadConfig());
+});
+function startApp(cfg){
+  try {
+    firebase.initializeApp(cfg, "adminPanel");
+    db = firebase.database();
+    try { storage = firebase.storage(); } catch(e){ storage = null; }
+  } catch(e){
+    setStatus("err", "Error · " + e.message);
+    $("setupStatus").textContent = "Config error: " + e.message;
+    return;
+  }
+  /* reflect editable config in the setup box */
+  $("cfgJson").value = JSON.stringify(cfg, null, 2);
+  $("cfgDbUrl").value = cfg.databaseURL || "";
+
+  var connRef = db.ref(".info/connected");
+  connRef.on("value", function(snap){
+    connected = snap.val() === true;
+    if (connected) setStatus("live", "Live · Connected");
+  });
+  db.ref(NODE).once("value").then(function(snap){
+    var val = snap.val();
+    if (val) content = merge(defaultContent(), val);
+    else content = defaultContent();
+    renderAll();
+    markClean(val ? "Loaded latest content from Firebase."
+                  : "Database is empty — showing starter content. Press Save to publish it.");
+    setStatus("live", "Live · Connected");
+  }).catch(function(err){
+    setStatus("err", "Error · " + (err && err.message ? err.message : err));
+    $("setupStatus").textContent = "Could not read " + NODE + ": " +
+      (err && err.message ? err.message : err) +
+      " — check the database URL and your Realtime Database rules.";
+  });
+}
+$("btnReconnect").addEventListener("click", function(){
+  var cfg;
+  try { cfg = JSON.parse($("cfgJson").value); }
+  catch(e){ $("setupStatus").textContent = "Config JSON is not valid: " + e.message; return; }
+  cfg.databaseURL = $("cfgDbUrl").value.trim();
+  if (!cfg.databaseURL){ $("setupStatus").textContent = "Database URL is empty."; return; }
+  try { localStorage.setItem(LS_CFG, JSON.stringify(cfg)); } catch(e){}
+  connectFirebase(cfg);
+  toast("Reconnecting with the new config…");
+});
+$("btnResetCfg").addEventListener("click", function(){
+  try { localStorage.removeItem(LS_CFG); } catch(e){}
+  connectFirebase(loadConfig());
+  toast("Back to the built-in Firebase config.");
+});
+function reloadFromFirebase(){
+  if (!db){ toast("Not connected yet."); return; }
+  db.ref(NODE).once("value").then(function(snap){
+    var val = snap.val();
+    content = val ? merge(defaultContent(), val) : defaultContent();
+    renderAll(); markClean("Reloaded from Firebase — local edits discarded.");
+    toast("Reloaded from Firebase.");
+  }).catch(function(err){ toast("Reload failed: " + (err && err.message ? err.message : err)); });
+}
+$("btnReload").addEventListener("click", reloadFromFirebase);
+$("btnReload2").addEventListener("click", reloadFromFirebase);
+
+/* ================= Save ================= */
+$("btnSave").addEventListener("click", function(){
+  if (!db){ toast("Not connected — check the status pill first."); return; }
+  var btn = $("btnSave"); btn.disabled = true; btn.textContent = "Saving…";
+  db.ref(NODE).set(content).then(function(){
+    markClean("Saved ✓ — the main portfolio now updates in real time for every visitor.");
+    toast("Saved to Firebase ✓ Portfolio is updating live.");
+  }).catch(function(err){
+    var m = $("saveMsg"); m.className = "msg err";
+    m.textContent = "Save failed: " + (err && err.message ? err.message : err) +
+      " — check Database rules (write access) and the database URL.";
+    toast("Save failed — see message at the bottom.");
+  }).then(function(){ btn.disabled = false; btn.textContent = "Save to Firebase"; });
+});
+
+/* ================= Rendering ================= */
+function itemHead(path, idx){
+  return '<div class="item-head"><span class="num">#' + (idx + 1) + '</span>' +
+    '<button class="icon-btn" type="button" data-move="' + path + '" data-dir="-1" title="Move up" aria-label="Move up">↑</button>' +
+    '<button class="icon-btn" type="button" data-move="' + path + '" data-dir="1" title="Move down" aria-label="Move down">↓</button>' +
+    '<button class="icon-btn del" type="button" data-remove="' + path + '" title="Remove" aria-label="Remove">✕</button></div>';
+}
+function pairFields(base, enLabel, bnLabel, textarea){
+  var tag = textarea ? "textarea" : "input";
+  var en = textarea
+    ? '<textarea data-bind="' + base + '.en">' + esc(getPath(content, base + ".en")) + '</textarea>'
+    : '<input type="text" data-bind="' + base + '.en" value="' + esc(getPath(content, base + ".en")) + '" />';
+  var bn = textarea
+    ? '<textarea data-bind="' + base + '.bn">' + esc(getPath(content, base + ".bn")) + '</textarea>'
+    : '<input type="text" data-bind="' + base + '.bn" value="' + esc(getPath(content, base + ".bn")) + '" />';
+  return '<div class="pair">' +
+    '<div class="field"><label class="tag-en">' + enLabel + '</label>' + en + '</div>' +
+    '<div class="field"><label class="tag-bn">' + bnLabel + '</label>' + bn + '</div></div>';
+}
+function textField(path, label, placeholder){
+  return '<div class="field"><label>' + label + '</label>' +
+    '<input type="text" data-bind="' + path + '" value="' + esc(getPath(content, path)) + '"' +
+    (placeholder ? ' placeholder="' + esc(placeholder) + '"' : '') + ' /></div>';
+}
+
+function renderStats(){
+  var list = getPath(content, "hero.stats") || [];
+  $("list-stats").innerHTML = list.map(function(s, i){
+    var base = "hero.stats." + i;
+    return '<div class="item">' + itemHead(base, i) +
+      '<div class="grid2"><div class="field"><label>Value</label>' +
+      '<input type="text" data-bind="' + base + '.value" value="' + esc(s.value) + '" /></div></div>' +
+      '<div style="margin-top:10px">' + pairFields(base + ".label", "Label", "লেবেল") + '</div></div>';
+  }).join("");
+}
+function renderBanners(){
+  var list = getPath(content, "banners") || [];
+  $("list-banners").innerHTML = list.map(function(b, i){
+    var base = "banners." + i;
+    var img = b.image
+      ? '<img class="thumb" src="' + esc(b.image) + '" alt="" onerror="this.outerHTML=\'<div class=&quot;thumb-empty&quot;>Image failed to load — check the URL.</div>\'" />'
+      : '<div class="thumb-empty">No banner image (optional).</div>';
+    return '<div class="item">' + itemHead(base, i) +
+      '<div class="thumb-empty" style="margin:0 0 10px">Rotation position ' + (i + 1) +
+      ' — banners loop on the main site in this order, one every 5 seconds.</div>' +
+      pairFields(base + ".text", "Banner text", "ব্যানারের লেখা") +
+      '<div class="grid2" style="margin-top:10px">' +
+        textField(base + ".image", "Image URL (optional)", "https://…") +
+        textField(base + ".link", "Link URL (optional)", "https://…") +
+      '</div>' + img +
+      '<label class="switch-row" style="margin-top:12px">' +
+        '<input type="checkbox" data-bind-check="' + base + '.enabled"' + (b.enabled ? " checked" : "") + ' />' +
+        '<span>Show this banner on the main site / ব্যানারটি দেখান</span></label></div>';
+  }).join("");
+}
+
+var PROFILE_META = {
+  support: { name: "Customer Support" },
+  media:   { name: "Media Buyer" },
+  video:   { name: "Video Editor" }
+};
+function renderProfile(){
+  var key = currentProfile, base = "profiles." + key, p = getPath(content, base);
+  var html = "";
+  html += pairFields(base + ".title", "Profile title", "প্রোফাইলের নাম");
+  html += '<div style="margin-top:12px">' + pairFields(base + ".tagline", "Tagline", "ট্যাগলাইন", true) + '</div>';
+
+  /* Experience */
+  html += '<h3 class="subhead">Work Experience</h3><p class="hint">Jobs for this profile only.</p><div class="items">';
+  html += (p.experience || []).map(function(x, i){
+    var b = base + ".experience." + i;
+    return '<div class="item">' + itemHead(b, i) +
+      pairFields(b + ".role", "Role", "পদবি") +
+      '<div class="grid2" style="margin-top:10px">' +
+        textField(b + ".company", "Company") + textField(b + ".period", "Period", "e.g. 2023 — Present") +
+      '</div><div style="margin-top:10px">' + pairFields(b + ".desc", "Description", "বিবরণ", true) + '</div></div>';
+  }).join("");
+  html += '</div><div class="add-row"><button class="btn small" type="button" data-add="' + base + '.experience">+ Add experience</button></div>';
+
+  /* Education */
+  html += '<h3 class="subhead">Education</h3><p class="hint">Kept separate from experience, as its own section.</p><div class="items">';
+  html += (p.education || []).map(function(x, i){
+    var b = base + ".education." + i;
+    return '<div class="item">' + itemHead(b, i) +
+      pairFields(b + ".title", "Degree / course", "ডিগ্রি / কোর্স") +
+      '<div class="grid2" style="margin-top:10px">' +
+        textField(b + ".place", "Institution") + textField(b + ".period", "Period", "e.g. 2022 — Present") +
+      '</div><div style="margin-top:10px">' + pairFields(b + ".note", "Note", "মন্তব্য", true) + '</div></div>';
+  }).join("");
+  html += '</div><div class="add-row"><button class="btn small" type="button" data-add="' + base + '.education">+ Add education</button></div>';
+
+  /* Skills */
+  html += '<h3 class="subhead">Skills</h3><p class="hint">Level is a number from 0 to 100 for the skill bar.</p><div class="items">';
+  html += (p.skills || []).map(function(x, i){
+    var b = base + ".skills." + i;
+    return '<div class="item">' + itemHead(b, i) +
+      pairFields(b + ".name", "Skill name", "দক্ষতার নাম") +
+      '<div class="field" style="margin-top:10px;max-width:180px"><label>Level (0–100)</label>' +
+      '<input type="number" min="0" max="100" data-bind-num="' + b + '.level" value="' + esc(x.level) + '" /></div></div>';
+  }).join("");
+  html += '</div><div class="add-row"><button class="btn small" type="button" data-add="' + base + '.skills">+ Add skill</button></div>';
+
+  /* Languages */
+  html += '<h3 class="subhead">Languages</h3><div class="items">';
+  html += (p.languages || []).map(function(x, i){
+    var b = base + ".languages." + i;
+    return '<div class="item">' + itemHead(b, i) +
+      pairFields(b + ".name", "Language", "ভাষা") +
+      '<div style="margin-top:10px">' + pairFields(b + ".level", "Level", "পর্যায়") + '</div></div>';
+  }).join("");
+  html += '</div><div class="add-row"><button class="btn small" type="button" data-add="' + base + '.languages">+ Add language</button></div>';
+
+  /* Samples */
+  html += '<h3 class="subhead">Work Samples / কাজের নমুনা</h3>' +
+    '<p class="hint">Photo samples: paste an image link or upload a photo. Video samples: paste a YouTube / Vimeo / video link — it shows as an embed on the main site.</p><div class="items">';
+  html += (p.samples || []).map(function(x, i){
+    var b = base + ".samples." + i;
+    var img = x.image
+      ? '<img class="thumb" src="' + esc(x.image) + '" alt="" onerror="this.outerHTML=\'<div class=&quot;thumb-empty&quot;>Image failed to load — check the link.</div>\'" />'
+      : '<div class="thumb-empty">No photo yet for this sample.</div>';
+    return '<div class="item">' + itemHead(b, i) +
+      pairFields(b + ".title", "Sample title", "নমুনার নাম") +
+      '<div style="margin-top:10px">' + pairFields(b + ".desc", "Short description", "ছোট বিবরণ", true) + '</div>' +
+      '<div class="field" style="margin-top:10px;max-width:220px"><label>Type</label>' +
+        '<select data-bind="' + b + '.kind">' +
+          '<option value="photo"' + (x.kind === "photo" ? " selected" : "") + '>Photo</option>' +
+          '<option value="video"' + (x.kind === "video" ? " selected" : "") + '>Video</option>' +
+        '</select></div>' +
+      '<div class="grid2" style="margin-top:10px">' +
+        textField(b + ".image", "Photo — image URL", "https://…") +
+        '<div class="field"><label>Photo — upload a file</label>' +
+          '<input type="file" accept="image/*" data-upload="' + b + '" />' +
+          '<div class="sub-hint">Uploads go to Firebase Storage. If Storage is not enabled, the photo is saved inside the database instead (keep it under ~700 KB).</div>' +
+          '<div class="upload-status" id="up-' + b.replace(/\./g, "-") + '"></div></div>' +
+      '</div>' + img +
+      '<div style="margin-top:10px">' + textField(b + ".video", "Video link (YouTube / Vimeo / .mp4)", "https://www.youtube.com/watch?v=…") + '</div>' +
+    '</div>';
+  }).join("");
+  html += '</div><div class="add-row"><button class="btn small" type="button" data-add="' + base + '.samples">+ Add sample</button></div>';
+
+  $("profileEditor").innerHTML = html;
+}
+function renderAll(){
+  /* plain bound fields outside lists */
+  document.querySelectorAll("[data-bind]").forEach(function(el){
+    if (el.closest(".items") || el.closest("#profileEditor")) return;
+    var v = getPath(content, el.getAttribute("data-bind"));
+    if (typeof v === "string" && el.value !== v) el.value = v;
+  });
+  renderStats(); renderBanners(); renderProfile();
+}
+
+/* ================= Editing events (delegated) ================= */
+var editor = $("editor");
+editor.addEventListener("input", function(e){
+  var t = e.target;
+  if (t.hasAttribute("data-bind")){ setPath(content, t.getAttribute("data-bind"), t.value); markDirty(); }
+  if (t.hasAttribute("data-bind-num")){
+    var n = parseInt(t.value, 10); if (isNaN(n)) n = 0; n = Math.max(0, Math.min(100, n));
+    setPath(content, t.getAttribute("data-bind-num"), n); markDirty();
+  }
+});
+editor.addEventListener("change", function(e){
+  var t = e.target;
+  if (t.hasAttribute("data-bind")){ setPath(content, t.getAttribute("data-bind"), t.value); markDirty(); }
+  if (t.hasAttribute("data-bind-check")){ setPath(content, t.getAttribute("data-bind-check"), t.checked); markDirty(); }
+  if (t.hasAttribute("data-upload")) handleUpload(t);
+});
+var BLANKS = {
+  "hero.stats": function(){ return { value: "", label: L("","") }; },
+  "banners": function(){ return { text: L("",""), image: "", link: "", enabled: true }; }
+};
+function blankFor(listPath){
+  if (BLANKS[listPath]) return BLANKS[listPath]();
+  if (/\.experience$/.test(listPath)) return { role: L("",""), company: "", period: "", desc: L("","") };
+  if (/\.education$/.test(listPath)) return { title: L("",""), place: "", period: "", note: L("","") };
+  if (/\.skills$/.test(listPath)) return { name: L("",""), level: 80 };
+  if (/\.languages$/.test(listPath)) return { name: L("",""), level: L("","") };
+  if (/\.samples$/.test(listPath)) return blankSample();
+  return {};
+}
+editor.addEventListener("click", function(e){
+  var add = e.target.closest("[data-add]");
+  if (add){
+    var lp = add.getAttribute("data-add");
+    var arr = getPath(content, lp); if (!Array.isArray(arr)){ setPath(content, lp, []); arr = getPath(content, lp); }
+    arr.push(blankFor(lp)); markDirty(); renderAll(); return;
+  }
+  var rem = e.target.closest("[data-remove]");
+  if (rem){
+    var rp = rem.getAttribute("data-remove");
+    var idx = parseInt(rp.split(".").pop(), 10);
+    var parent = getPath(content, rp.split(".").slice(0, -1).join("."));
+    parent.splice(idx, 1); markDirty(); renderAll(); return;
+  }
+  var mv = e.target.closest("[data-move]");
+  if (mv){
+    var mp = mv.getAttribute("data-move"), dir = parseInt(mv.getAttribute("data-dir"), 10);
+    var mi = parseInt(mp.split(".").pop(), 10);
+    var parr = getPath(content, mp.split(".").slice(0, -1).join("."));
+    var ni = mi + dir;
+    if (ni < 0 || ni >= parr.length) return;
+    var tmp = parr[mi]; parr[mi] = parr[ni]; parr[ni] = tmp;
+    markDirty(); renderAll(); return;
+  }
+});
+$("profileTabs").addEventListener("click", function(e){
+  var tab = e.target.closest("[data-profile]"); if (!tab) return;
+  currentProfile = tab.getAttribute("data-profile");
+  document.querySelectorAll("#profileTabs .tab").forEach(function(t){
+    t.classList.toggle("active", t === tab);
+  });
+  renderProfile();
+});
+$("btnPreview").addEventListener("click", function(){
+  var url = getPath(content, "settings.siteUrl");
+  if (!url){ toast("Paste the portfolio URL first."); return; }
+  window.open(url, "_blank", "noopener");
+});
+
+/* ================= Photo upload: Storage first, data-URL fallback ================= */
+function handleUpload(input){
+  var file = input.files && input.files[0]; if (!file) return;
+  var samplePath = input.getAttribute("data-upload");
+  var statusEl = $("up-" + samplePath.replace(/\./g, "-"));
+  function say(cls, msg){ if (statusEl){ statusEl.className = "upload-status " + cls; statusEl.textContent = msg; } }
+  if (!file.type || file.type.indexOf("image/") !== 0){ say("err", "That file is not an image."); return; }
+
+  function useDataUrl(){
+    var reader = new FileReader();
+    reader.onload = function(){
+      var dataUrl = String(reader.result);
+      /* downscale big photos so the database copy stays small */
+      var img = new Image();
+      img.onload = function(){
+        var maxSide = 1000, w = img.width, h = img.height;
+        if (Math.max(w, h) > maxSide){
+          var s = maxSide / Math.max(w, h); w = Math.round(w * s); h = Math.round(h * s);
+          var c = document.createElement("canvas"); c.width = w; c.height = h;
+          c.getContext("2d").drawImage(img, 0, 0, w, h);
+          dataUrl = c.toDataURL("image/jpeg", 0.82);
+        }
+        finish(dataUrl, true);
+      };
+      img.onerror = function(){ finish(dataUrl, true); };
+      img.src = dataUrl;
+    };
+    reader.onerror = function(){ say("err", "Could not read that file."); };
+    reader.readAsDataURL(file);
+  }
+  function finish(url, isDataUrl){
+    setPath(content, samplePath + ".image", url);
+    setPath(content, samplePath + ".kind", "photo");
+    markDirty(); renderAll();
+    var newStatus = $("up-" + samplePath.replace(/\./g, "-"));
+    if (isDataUrl){
+      var kb = Math.round(url.length * 3 / 4 / 1024);
+      if (newStatus){ newStatus.className = "upload-status warn";
+        newStatus.textContent = "Saved inside the database as an embedded photo (~" + kb +
+          " KB). Warning: large embedded photos slow the site — under ~700 KB is best. Press Save to publish."; }
+      toast("Photo embedded in database (Storage unavailable). Press Save.");
+    } else {
+      if (newStatus){ newStatus.className = "upload-status ok";
+        newStatus.textContent = "Uploaded to Firebase Storage ✓ Press Save to publish."; }
+      toast("Photo uploaded to Storage ✓ Press Save.");
+    }
+  }
+  if (storage){
+    say("", "Uploading to Firebase Storage…");
+    var safeName = Date.now() + "-" + file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    var ref = storage.ref("portfolio/samples/" + safeName);
+    ref.put(file).then(function(){ return ref.getDownloadURL(); }).then(function(url){
+      finish(url, false);
+    }).catch(function(){
+      say("warn", "Storage upload failed — saving the photo inside the database instead…");
+      useDataUrl();
+    });
+  } else {
+    say("warn", "Firebase Storage is not available — saving the photo inside the database instead…");
+    useDataUrl();
+  }
+}
+
+/* ================= Admin UI language toggle (labels only; content stays EN + বাংলা side by side) ================= */
+var I18N = {
+  en: { previewH: "Main portfolio site", heroH: "Hero / headline area", statsH: "Stat cards",
+    contactH: "Contact details", bannerH: "Headline / banner items", profilesH: "The three profiles",
+    previewHint: "Paste your live portfolio address here to preview it. This admin site is separate — the portfolio itself has no admin button and never links here.",
+    heroHint: "Name, title and intro shown at the top of the portfolio. Fill both English and বাংলা — the main site's language switch uses these.",
+    statsHint: "Short numbers shown on the hero, e.g. “3+ Years experience”.",
+    contactHint: "Shown when a visitor taps Contact on the main site.",
+    bannerHint: "Announcements shown as a rotating banner on the main site — one at a time, changing every 5 seconds with a fade/slide, looping in this list's order (hover/tap pauses it). Add text, an optional image and link, switch each one on or off, and use ↑ ↓ to change the rotation order.",
+    profilesHint: "Each profile keeps its own Experience, Education, Skills, Languages and Work Samples.",
+    footNote: "Saving writes everything to Firebase (portfolio/content). The main portfolio reads the same place and updates in real time for every visitor — no need to re-upload the portfolio file.",
+    langBtn: "বাংলা" },
+  bn: { previewH: "মূল পোর্টফোলিও সাইট", heroH: "হিরো / হেডলাইন অংশ", statsH: "স্ট্যাট কার্ড",
+    contactH: "যোগাযোগের তথ্য", bannerH: "হেডলাইন / ব্যানার আইটেম", profilesH: "তিনটি প্রোফাইল",
+    previewHint: "লাইভ পোর্টফোলিওর ঠিকানা এখানে বসালে প্রিভিউ খুলতে পারবেন। এই অ্যাডমিন সাইট আলাদা — মূল পোর্টফোলিওতে কোনো অ্যাডমিন বাটন নেই।",
+    heroHint: "পোর্টফোলিওর একদম উপরে দেখানো নাম, টাইটেল ও পরিচিতি। English ও বাংলা দুটোই পূরণ করুন — মূল সাইটের ভাষা বদলের বাটন এগুলোই ব্যবহার করে।",
+    statsHint: "হিরোতে দেখানো ছোট সংখ্যা, যেমন “3+ Years experience”。",
+    contactHint: "মূল সাইটে Contact-এ ট্যাপ করলে এগুলো দেখা যাবে।",
+    bannerHint: "মূল সাইটে ঘূর্ণায়মান ব্যানার হিসেবে দেখানো ঘোষণা — একবারে একটা, প্রতি ৫ সেকেন্ডে ফেড/স্লাইড হয়ে বদলায়, এই তালিকার ক্রমেই ঘুরতে থাকে (হোভার/ট্যাপ করলে থামে)। লেখা, চাইলে ছবি ও লিংক যোগ করুন, প্রতিটা আলাদা করে অন/অফ করুন, আর ↑ ↓ দিয়ে ঘূর্ণনের ক্রম বদলান।",
+    profilesHint: "প্রতিটা প্রোফাইলের নিজের Experience, Education, Skills, Languages ও Work Samples আলাদা থাকে।",
+    footNote: "Save করলে সবকিছু Firebase-এ (portfolio/content) যাবে। মূল পোর্টফোলিও একই জায়গা থেকে পড়ে, তাই সব ভিজিটরের কাছে সাথে সাথে আপডেট হবে — পোর্টফোলিও ফাইল আবার আপলোড করতে হবে না।",
+    langBtn: "English" }
+};
+var uiLang = "en";
+$("btnLang").addEventListener("click", function(){
+  uiLang = uiLang === "en" ? "bn" : "en";
+  var dict = I18N[uiLang];
+  document.querySelectorAll("[data-i18n]").forEach(function(el){
+    var k = el.getAttribute("data-i18n"); if (dict[k]) el.textContent = dict[k];
+  });
+  $("btnLang").textContent = dict.langBtn;
+});
+
+/* ================= Boot ================= */
+initGate();
+})();
+</script>
+</body>
+</html>
