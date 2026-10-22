@@ -142,6 +142,20 @@
     background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:10px;font-weight:600;
     font-size:15px;box-shadow:var(--shadow);display:none;max-width:92vw;text-align:center}
   .hidden{display:none !important}
+
+  /* language-pair warning, live clock, delete modal, contact test links */
+  .lang-warn{display:block;background:var(--warn-bg);color:var(--warn);border-radius:8px;
+    padding:7px 11px;font-size:13px;margin-top:8px;font-weight:600;line-height:1.45}
+  .clock{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink2);
+    white-space:nowrap}
+  .modal{position:fixed;inset:0;z-index:80;background:rgba(10,14,10,.5);display:flex;
+    align-items:center;justify-content:center;padding:20px}
+  .modal-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    max-width:430px;width:100%;padding:24px;box-shadow:var(--shadow)}
+  .test-link{font-size:13px;font-weight:600;display:inline-block;margin-top:4px;
+    word-break:break-all}
+  .status-now{font-size:13.5px;color:var(--ink2);margin-top:10px}
+  .status-now strong{color:var(--accent)}
 </style>
 </head>
 <body>
@@ -182,6 +196,7 @@
   <div class="topbar">
     <div class="topbar-in">
       <div class="brand"><span class="dot"></span>Portfolio Admin</div>
+      <span class="clock" id="liveClock" title="Your local date &amp; time, live"></span>
       <span class="status-pill" id="statusPill"><span class="sd"></span><span id="statusText">Connecting…</span></span>
       <button class="btn small hidden" id="btnRetryLib" type="button">Retry connection / আবার চেষ্টা করুন</button>
       <span class="dirty-flag" id="dirtyFlag">● Unsaved changes</span>
@@ -215,34 +230,82 @@
         <div class="field"><label class="tag-en">Name</label><input type="text" data-bind="hero.name.en" /></div>
         <div class="field"><label class="tag-bn">নাম</label><input type="text" data-bind="hero.name.bn" /></div>
       </div>
+      <div class="lang-warn hidden" data-warn="hero.name">One language is empty — fill both so the main site never shows a blank. / একটা ভাষা খালি আছে, দুটোই পূরণ করুন।</div>
       <div class="pair" style="margin-top:12px">
         <div class="field"><label class="tag-en">Title / roles line</label><input type="text" data-bind="hero.title.en" /></div>
         <div class="field"><label class="tag-bn">টাইটেল</label><input type="text" data-bind="hero.title.bn" /></div>
       </div>
+      <div class="lang-warn hidden" data-warn="hero.title">One language is empty — fill both so the main site never shows a blank. / একটা ভাষা খালি আছে, দুটোই পূরণ করুন।</div>
       <div class="pair" style="margin-top:12px">
         <div class="field"><label class="tag-en">Bio</label><textarea data-bind="hero.bio.en"></textarea></div>
         <div class="field"><label class="tag-bn">পরিচিতি</label><textarea data-bind="hero.bio.bn"></textarea></div>
       </div>
+      <div class="lang-warn hidden" data-warn="hero.bio">One language is empty — fill both so the main site never shows a blank. / একটা ভাষা খালি আছে, দুটোই পূরণ করুন।</div>
       <h3 class="subhead" data-i18n="statsH">Stat cards</h3>
       <p class="hint" data-i18n="statsHint">Short numbers shown on the hero, e.g. “3+ Years experience”.</p>
       <div class="items" id="list-stats"></div>
       <div class="add-row"><button class="btn small" data-add="hero.stats" type="button">+ Add stat</button></div>
     </section>
 
+    <!-- Status -->
+    <section class="card">
+      <h2>Profile status / প্রোফাইল স্ট্যাটাস</h2>
+      <p class="hint">Shown as a badge on the main portfolio, so visitors can see whether you are free for work, busy on a project, active right now, or not available. Pick the current mode; the labels are editable in both languages.</p>
+      <div class="field" style="max-width:360px">
+        <label>Current status</label>
+        <select data-bind="status.mode" id="statusMode">
+          <option value="available">Available / Free for Work</option>
+          <option value="busy">Busy / Working on a Project</option>
+          <option value="active">Active Now</option>
+          <option value="break">Not Available / On Break</option>
+        </select>
+      </div>
+      <p class="status-now" id="statusNow"></p>
+      <div class="pair" style="margin-top:12px">
+        <div class="field"><label class="tag-en">Available label</label><input type="text" data-bind="status.labels.available.en" /></div>
+        <div class="field"><label class="tag-bn">লেবেল</label><input type="text" data-bind="status.labels.available.bn" /></div>
+      </div>
+      <div class="lang-warn hidden" data-warn="status.labels.available">One language is empty — fill both so the main site never shows a blank. / একটা ভাষা খালি আছে, দুটোই পূরণ করুন।</div>
+      <div class="pair" style="margin-top:12px">
+        <div class="field"><label class="tag-en">Busy label</label><input type="text" data-bind="status.labels.busy.en" /></div>
+        <div class="field"><label class="tag-bn">লেবেল</label><input type="text" data-bind="status.labels.busy.bn" /></div>
+      </div>
+      <div class="lang-warn hidden" data-warn="status.labels.busy">One language is empty — fill both so the main site never shows a blank. / একটা ভাষা খালি আছে, দুটোই পূরণ করুন।</div>
+      <div class="pair" style="margin-top:12px">
+        <div class="field"><label class="tag-en">Active Now label</label><input type="text" data-bind="status.labels.active.en" /></div>
+        <div class="field"><label class="tag-bn">লেবেল</label><input type="text" data-bind="status.labels.active.bn" /></div>
+      </div>
+      <div class="lang-warn hidden" data-warn="status.labels.active">One language is empty — fill both so the main site never shows a blank. / একটা ভাষা খালি আছে, দুটোই পূরণ করুন।</div>
+      <div class="pair" style="margin-top:12px">
+        <div class="field"><label class="tag-en">Not Available label</label><input type="text" data-bind="status.labels.break.en" /></div>
+        <div class="field"><label class="tag-bn">লেবেল</label><input type="text" data-bind="status.labels.break.bn" /></div>
+      </div>
+      <div class="lang-warn hidden" data-warn="status.labels.break">One language is empty — fill both so the main site never shows a blank. / একটা ভাষা খালি আছে, দুটোই পূরণ করুন।</div>
+    </section>
+
     <!-- Contact -->
     <section class="card">
       <h2 data-i18n="contactH">Contact details</h2>
-      <p class="hint" data-i18n="contactHint">Shown when a visitor taps Contact on the main site.</p>
+      <p class="hint" data-i18n="contactHint">Shown when a visitor taps Contact on the main site. Use each Test link to check exactly what a visitor's tap will open — Telegram goes to t.me, WhatsApp to wa.me, email opens their mail app.</p>
       <div class="grid2">
-        <div class="field"><label>Phone / WhatsApp</label><input type="tel" data-bind="contact.phone" /></div>
-        <div class="field"><label>Email</label><input type="email" data-bind="contact.email" /></div>
-        <div class="field"><label>Telegram (username or link)</label><input type="text" data-bind="contact.telegram" /></div>
-        <div class="field"><label>Fiverr profile link</label><input type="url" data-bind="contact.fiverr" placeholder="https://www.fiverr.com/…" /></div>
+        <div class="field"><label>Phone</label><input type="tel" data-bind="contact.phone" placeholder="+880…" />
+          <a class="test-link hidden" id="test-phone" href="#" target="_blank" rel="noopener"></a></div>
+        <div class="field"><label>WhatsApp number</label><input type="tel" data-bind="contact.whatsapp" placeholder="+880…" />
+          <div class="sub-hint">With country code — visitor taps open a WhatsApp chat (wa.me).</div>
+          <a class="test-link hidden" id="test-whatsapp" href="#" target="_blank" rel="noopener"></a></div>
+        <div class="field"><label>Email</label><input type="email" data-bind="contact.email" />
+          <a class="test-link hidden" id="test-email" href="#"></a></div>
+        <div class="field"><label>Telegram (username or link)</label><input type="text" data-bind="contact.telegram" placeholder="@username" />
+          <div class="sub-hint">Just the username is fine — visitor taps open Telegram (t.me).</div>
+          <a class="test-link hidden" id="test-telegram" href="#" target="_blank" rel="noopener"></a></div>
+        <div class="field"><label>Fiverr profile link</label><input type="url" data-bind="contact.fiverr" placeholder="https://www.fiverr.com/…" />
+          <a class="test-link hidden" id="test-fiverr" href="#" target="_blank" rel="noopener"></a></div>
       </div>
       <div class="pair" style="margin-top:12px">
         <div class="field"><label class="tag-en">Location</label><input type="text" data-bind="contact.location.en" /></div>
         <div class="field"><label class="tag-bn">ঠিকানা / এলাকা</label><input type="text" data-bind="contact.location.bn" /></div>
       </div>
+      <div class="lang-warn hidden" data-warn="contact.location">One language is empty — fill both so the main site never shows a blank. / একটা ভাষা খালি আছে, দুটোই পূরণ করুন।</div>
     </section>
 
     <!-- Banners -->
@@ -253,16 +316,33 @@
       <div class="add-row"><button class="btn small" data-add="banners" type="button">+ Add banner</button></div>
     </section>
 
-    <!-- Profiles -->
+    <!-- Profiles / sectors -->
     <section class="card">
-      <h2 data-i18n="profilesH">The three profiles</h2>
-      <p class="hint" data-i18n="profilesHint">Each profile keeps its own Experience, Education, Skills, Languages and Work Samples.</p>
-      <div class="tabs" id="profileTabs">
-        <button class="tab active" data-profile="support" type="button">Customer Support</button>
-        <button class="tab" data-profile="media" type="button">Media Buyer</button>
-        <button class="tab" data-profile="video" type="button">Video Editor</button>
-      </div>
+      <h2 data-i18n="profilesH">Sectors / profiles</h2>
+      <p class="hint" data-i18n="profilesHint">Each sector has its own edit tab — its own Experience, Education, Skills, Languages and Work Samples. Add a new sector any time, or delete one from inside its tab.</p>
+      <div class="tabs" id="profileTabs"></div>
+      <div style="margin-bottom:16px"><button class="btn small" id="btnAddSector" type="button">+ Add sector / নতুন সেক্টর যোগ করুন</button></div>
       <div id="profileEditor"></div>
+    </section>
+
+    <!-- Fiverr -->
+    <section class="card">
+      <h2>Fiverr</h2>
+      <p class="hint">Your Fiverr details, saved with everything else and linked from the main portfolio.</p>
+      <div class="grid2">
+        <div class="field"><label>Fiverr profile URL</label><input type="url" data-bind="fiverr.profileUrl" placeholder="https://www.fiverr.com/…" /></div>
+        <div class="field"><label>Fiverr username</label><input type="text" data-bind="fiverr.username" placeholder="username" /></div>
+      </div>
+      <h3 class="subhead">Gig links</h3>
+      <p class="hint">Gig titles in both languages, with the gig's own link.</p>
+      <div class="items" id="list-gigs"></div>
+      <div class="add-row"><button class="btn small" data-add="fiverr.gigs" type="button">+ Add gig link</button></div>
+      <div class="note-box">
+        <strong>Future connection — not connected yet:</strong> a real Fiverr connection (Fiverr API / OAuth
+        sign-in) will be added in this section later. Nothing is fetched from Fiverr automatically yet —
+        the profile and gig links above are typed in by you and simply saved to Firebase.
+        <br />ভবিষ্যতে এখানে আসল Fiverr কানেকশন (API / OAuth) যোগ হবে — এখনো কানেক্ট হয়নি, কোনো তথ্য অটোমেটিক আনা হয় না।
+      </div>
     </section>
 
     <!-- Firebase setup -->
@@ -307,6 +387,19 @@
   </div>
 </div>
 
+<!-- ================= DELETE SECTOR CONFIRM ================= -->
+<div class="modal hidden" id="delModal">
+  <div class="modal-card">
+    <h3 style="margin:0 0 8px;font-size:18px">Delete this sector?</h3>
+    <p style="margin:0 0 6px">You are about to delete <strong id="delSectorName"></strong>, with all of its Experience, Education, Skills, Languages and Samples.</p>
+    <p style="color:var(--ink2);font-size:14px;margin:0 0 18px">It disappears from the editor right away and from the main portfolio when you press Save. Reloading from Firebase before saving brings it back.</p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+      <button class="btn" id="btnCancelDelete" type="button">Cancel</button>
+      <button class="btn danger" id="btnConfirmDelete" type="button" style="border-color:var(--danger)">Delete sector</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- Firebase library is loaded by the script below with CDN fallbacks + retry,
@@ -334,7 +427,7 @@ var NODE = "portfolio/content";
 function L(en, bn){ return { en: en || "", bn: bn || "" }; }
 function blankSample(){ return { title: L("",""), desc: L("",""), kind: "photo", image: "", video: "" }; }
 function blankProfile(titleEn, titleBn){
-  return { title: L(titleEn, titleBn), tagline: L("",""),
+  return { title: L(titleEn, titleBn), tagline: L("",""), color: "#0d7a4c", icon: "support",
     experience: [], education: [], skills: [], languages: [], samples: [] };
 }
 function defaultContent(){
@@ -353,12 +446,23 @@ function defaultContent(){
       ]
     },
     contact: {
-      phone: "", email: "", telegram: "", fiverr: "",
+      phone: "", whatsapp: "", email: "", telegram: "", fiverr: "",
       location: L("Bangladesh", "বাংলাদেশ")
     },
+    status: {
+      mode: "available",
+      labels: {
+        available: L("Available for work", "কাজের জন্য ফ্রি আছি"),
+        busy: L("Busy — working on a project", "ব্যস্ত — একটি প্রজেক্টে কাজ করছি"),
+        active: L("Active now", "এখন অ্যাক্টিভ আছি"),
+        "break": L("Not available — on a break", "এখন পাওয়া যাবে না — বিরতিতে আছি")
+      }
+    },
+    fiverr: { profileUrl: "", username: "", gigs: [] },
     banners: [],
     profiles: {
       support: Object.assign(blankProfile("Customer Support", "কাস্টমার সাপোর্ট"), {
+        color: "#0d7a4c", icon: "support",
         tagline: L("Live chat & email support in Bangla, English and Hindi — Zendesk, LiveChat, Jira, Slack, Chatwoot.",
                    "বাংলা, ইংরেজি ও হিন্দিতে লাইভ চ্যাট ও ইমেইল সাপোর্ট — Zendesk, LiveChat, Jira, Slack, Chatwoot।"),
         experience: [
@@ -384,6 +488,7 @@ function defaultContent(){
         samples: []
       }),
       media: Object.assign(blankProfile("Media Buyer", "মিডিয়া বায়ার"), {
+        color: "#b3540d", icon: "ads",
         tagline: L("Facebook & Google ads with Pixel, Conversion API and GA4 tracking — planned, launched and optimised.",
                    "Pixel, Conversion API ও GA4 ট্র্যাকিংসহ Facebook ও Google অ্যাড — পরিকল্পনা, লঞ্চ ও অপটিমাইজেশন।"),
         experience: [
@@ -406,6 +511,7 @@ function defaultContent(){
         samples: []
       }),
       video: Object.assign(blankProfile("Video Editor", "ভিডিও এডিটর"), {
+        color: "#1d6fb8", icon: "video",
         tagline: L("Premiere Pro editing for shorts, ads and promos — fast turnaround, clean cuts, captions and sound design.",
                    "শর্টস, অ্যাড ও প্রোমোর জন্য Premiere Pro এডিটিং — দ্রুত ডেলিভারি, পরিষ্কার কাট, ক্যাপশন ও সাউন্ড ডিজাইন।"),
         experience: [
@@ -439,17 +545,42 @@ function defaultContent(){
   };
 }
 
-/* Deep-merge loaded data over defaults so missing fields never break the editor */
-function merge(base, over){
-  if (Array.isArray(base)) return Array.isArray(over) ? over : base;
+/* Shape-fill loaded data so fields the editor expects always exist.
+   IMPORTANT: stored data is authoritative. Firebase Realtime Database
+   prunes empty arrays and deleted keys, so a key that is MISSING from the
+   stored document means the user emptied or deleted it on purpose — the old
+   merge filled those back in from the starter defaults, which silently
+   resurrected deleted sectors, samples and list items on every load (and
+   the next Save then wrote them back to the main site). Now a missing list
+   stays empty and a deleted sector stays deleted; only missing scalar
+   defaults (e.g. a status mode or colour from an older save) are filled. */
+function emptyFor(v){
+  if (Array.isArray(v)) return [];
+  if (v && typeof v === "object"){
+    var o = {};
+    Object.keys(v).forEach(function(k){ o[k] = emptyFor(v[k]); });
+    return o;
+  }
+  return v;
+}
+function merge(base, over, path){
+  path = path || "";
+  if (Array.isArray(base)) return Array.isArray(over) ? over : [];
   if (base && typeof base === "object"){
+    var overObj = (over && typeof over === "object") ? over : {};
     var out = {};
-    Object.keys(base).forEach(function(k){
-      out[k] = (over && typeof over === "object" && k in over) ? merge(base[k], over[k]) : base[k];
-    });
-    if (over && typeof over === "object"){
-      Object.keys(over).forEach(function(k){ if (!(k in out)) out[k] = over[k]; });
+    if (path === "profiles"){
+      /* Sectors are user-managed: only sectors actually stored come back. */
+      Object.keys(overObj).forEach(function(k){
+        out[k] = (k in base) ? merge(base[k], overObj[k], path + "." + k) : overObj[k];
+      });
+      return out;
     }
+    Object.keys(base).forEach(function(k){
+      out[k] = (k in overObj) ? merge(base[k], overObj[k], path ? path + "." + k : k)
+                              : emptyFor(base[k]);
+    });
+    Object.keys(overObj).forEach(function(k){ if (!(k in out)) out[k] = overObj[k]; });
     return out;
   }
   return (over === undefined || over === null) ? base : over;
@@ -484,6 +615,38 @@ function markDirty(){
 function markClean(msg){
   dirty = false; $("dirtyFlag").style.display = "none";
   var m = $("saveMsg"); m.className = "msg ok"; m.textContent = msg || "All changes saved.";
+}
+
+/* ================= Language safety =================
+   Every text is an {en, bn} pair. If one side is empty and the other has
+   text, saving copies the filled side across — so the main site's language
+   switch can never land on a blank. Warnings show live while editing. */
+function isLangPair(o){
+  return !!o && typeof o === "object" && !Array.isArray(o) &&
+    Object.keys(o).length === 2 && typeof o.en === "string" && typeof o.bn === "string";
+}
+function fillFallbacks(node){
+  var n = 0;
+  if (Array.isArray(node)){ node.forEach(function(x){ n += fillFallbacks(x); }); return n; }
+  if (node && typeof node === "object"){
+    if (isLangPair(node)){
+      if (!node.en.trim() && node.bn.trim()){ node.en = node.bn; n++; }
+      else if (!node.bn.trim() && node.en.trim()){ node.bn = node.en; n++; }
+      return n;
+    }
+    Object.keys(node).forEach(function(k){ n += fillFallbacks(node[k]); });
+  }
+  return n;
+}
+var LANG_WARN_TEXT = "One language is empty — fill both so the main site never shows a blank. / একটা ভাষা খালি আছে, দুটোই পূরণ করুন।";
+function refreshLangWarnings(){
+  document.querySelectorAll("[data-warn]").forEach(function(el){
+    var base = el.getAttribute("data-warn");
+    var en = getPath(content, base + ".en"), bn = getPath(content, base + ".bn");
+    var oneEmpty = typeof en === "string" && typeof bn === "string" &&
+      ((!en.trim() && !!bn.trim()) || (!bn.trim() && !!en.trim()));
+    el.classList.toggle("hidden", !oneEmpty);
+  });
 }
 
 /* ================= Passcode gate ================= */
@@ -606,8 +769,10 @@ function connectFirebase(cfg){
   ensureFirebaseLib().then(function(ok){
     if (!ok){
       setStatus("err", "Error · Firebase library failed to load — tap Retry");
-      $("setupStatus").textContent = "The Firebase library could not be loaded from any CDN mirror. " +
-        "Check your internet connection, then tap “Retry connection” in the top bar. " +
+      $("setupStatus").textContent = "The Firebase library could not be loaded from any CDN mirror " +
+        "(gstatic, cdnjs, jsDelivr). Check your internet connection, then tap “Retry connection” in the top bar. " +
+        "Note: inside an app preview frame, external scripts can be blocked — on your real GitHub Pages site " +
+        "with a normal internet connection this connects by itself. " +
         "ইন্টারনেট চেক করে উপরের Retry বোতামে চাপ দিন।";
       $("btnRetryLib").classList.remove("hidden");
       return;
@@ -629,9 +794,13 @@ $("btnRetryLib").addEventListener("click", function(){
 });
 function startApp(cfg){
   try {
-    firebase.initializeApp(cfg, "adminPanel");
-    db = firebase.database();
-    try { storage = firebase.storage(); } catch(e){ storage = null; }
+    /* The app is created under the name "adminPanel", so database() and
+       storage() MUST come from that app instance. Calling firebase.database()
+       with no argument looks for the default app "[DEFAULT]", which is never
+       created here — that threw app-compat/no-app and broke all data changes. */
+    var app = firebase.initializeApp(cfg, "adminPanel");
+    db = app.database();
+    try { storage = app.storage(); } catch(e){ storage = null; }
   } catch(e){
     setStatus("err", "Error · " + e.message);
     $("setupStatus").textContent = "Config error: " + e.message;
@@ -690,16 +859,40 @@ $("btnReload2").addEventListener("click", reloadFromFirebase);
 
 /* ================= Save ================= */
 $("btnSave").addEventListener("click", function(){
-  if (!db){ toast("Not connected — check the status pill first."); return; }
+  if (!db){
+    var nm = $("saveMsg"); nm.className = "msg err";
+    nm.textContent = "Not connected — nothing was saved. Check the status pill at the top, then press Save again. / কানেক্ট হয়নি — কিছুই সেভ হয়নি।";
+    toast("Not connected — check the status pill first.");
+    return;
+  }
+  /* Language guard: never write a blank where the other language has text */
+  var filled = fillFallbacks(content);
+  if (filled > 0){
+    renderAll();
+    toast(filled + " empty language field(s) were filled from the other language, so the main site never shows a blank.", 4200);
+  }
   var btn = $("btnSave"); btn.disabled = true; btn.textContent = "Saving…";
   db.ref(NODE).set(content).then(function(){
-    markClean("Saved ✓ — the main portfolio now updates in real time for every visitor.");
+    /* Verify the write actually landed — a save that Firebase accepted
+       locally but never stored must not be reported as success. */
+    return db.ref(NODE).once("value");
+  }).then(function(snap){
+    if (!snap.val()) throw new Error("The database is still empty after saving — the write did not land.");
+    markClean("Saved ✓ — verified in Firebase. The main portfolio now updates in real time for every visitor.");
     toast("Saved to Firebase ✓ Portfolio is updating live.");
   }).catch(function(err){
+    var raw = err && err.message ? err.message : String(err);
     var m = $("saveMsg"); m.className = "msg err";
-    m.textContent = "Save failed: " + (err && err.message ? err.message : err) +
-      " — check Database rules (write access) and the database URL.";
-    toast("Save failed — see message at the bottom.");
+    if (/PERMISSION_DENIED/i.test(raw)){
+      m.textContent = "Save failed: PERMISSION_DENIED — your database rules are blocking saves, so changes cannot be stored.";
+      $("setupStatus").textContent = "Fix: Firebase Console → Realtime Database → Rules — allow read and write on " +
+        "the portfolio/content node, e.g.  { \"rules\": { \"portfolio\": { \".read\": true, \"content\": { \".write\": true } } } }  " +
+        "তারপর আবার Save চাপুন।";
+      toast("Save blocked by database rules — see the Firebase Setup box.", 4600);
+    } else {
+      m.textContent = "Save failed: " + raw + " — check Database rules (write access) and the database URL.";
+      toast("Save failed — see message at the bottom.");
+    }
   }).then(function(){ btn.disabled = false; btn.textContent = "Save to Firebase"; });
 });
 
@@ -720,7 +913,8 @@ function pairFields(base, enLabel, bnLabel, textarea){
     : '<input type="text" data-bind="' + base + '.bn" value="' + esc(getPath(content, base + ".bn")) + '" />';
   return '<div class="pair">' +
     '<div class="field"><label class="tag-en">' + enLabel + '</label>' + en + '</div>' +
-    '<div class="field"><label class="tag-bn">' + bnLabel + '</label>' + bn + '</div></div>';
+    '<div class="field"><label class="tag-bn">' + bnLabel + '</label>' + bn + '</div></div>' +
+    '<div class="lang-warn hidden" data-warn="' + base + '">' + LANG_WARN_TEXT + '</div>';
 }
 function textField(path, label, placeholder){
   return '<div class="field"><label>' + label + '</label>' +
@@ -759,16 +953,48 @@ function renderBanners(){
   }).join("");
 }
 
-var PROFILE_META = {
-  support: { name: "Customer Support" },
-  media:   { name: "Media Buyer" },
-  video:   { name: "Video Editor" }
-};
+function sectorKeys(){ return Object.keys(content.profiles || {}); }
+function sectorName(k){
+  var p = content.profiles[k] || {};
+  return (p.title && (p.title.en || p.title.bn)) || k;
+}
+function renderTabs(){
+  var keys = sectorKeys();
+  if (keys.indexOf(currentProfile) < 0) currentProfile = keys[0];
+  $("profileTabs").innerHTML = keys.map(function(k){
+    return '<button class="tab' + (k === currentProfile ? " active" : "") +
+      '" data-profile="' + esc(k) + '" type="button">' + esc(sectorName(k)) + '</button>';
+  }).join("");
+}
+var ICON_OPTIONS = [
+  ["support", "Headset — customer support"], ["ads", "Megaphone — ads / marketing"],
+  ["video", "Video camera — video"], ["code", "Code — development"],
+  ["design", "Pen — design"], ["writing", "Writing — content"],
+  ["photo", "Camera — photography"], ["music", "Music"],
+  ["chart", "Chart — analytics"], ["star", "Star — general"], ["other", "General"]
+];
+function iconOptions(sel){
+  return ICON_OPTIONS.map(function(o){
+    return '<option value="' + o[0] + '"' + (sel === o[0] ? " selected" : "") + '>' + o[1] + '</option>';
+  }).join("");
+}
 function renderProfile(){
   var key = currentProfile, base = "profiles." + key, p = getPath(content, base);
+  if (!p){
+    $("profileEditor").innerHTML = '<p class="hint">No sectors yet — add one with the button above.</p>';
+    return;
+  }
   var html = "";
-  html += pairFields(base + ".title", "Profile title", "প্রোফাইলের নাম");
-  html += '<div style="margin-top:12px">' + pairFields(base + ".tagline", "Tagline", "ট্যাগলাইন", true) + '</div>';
+  html += pairFields(base + ".title", "Sector name", "সেক্টরের নাম");
+  html += '<div style="margin-top:12px">' + pairFields(base + ".tagline", "Description / tagline", "বিবরণ / ট্যাগলাইন", true) + '</div>';
+  html += '<div class="grid2" style="margin-top:12px">' +
+    '<div class="field"><label>Sector colour</label><div style="display:flex;gap:8px;align-items:center">' +
+      '<input type="color" data-colorfor="' + base + '" value="' + esc(p.color || "#0d7a4c") + '" ' +
+        'style="width:52px;height:38px;padding:2px;flex:none;background:var(--bg);border:1px solid var(--line);border-radius:8px" />' +
+      '<input type="text" data-bind="' + base + '.color" value="' + esc(p.color || "") + '" placeholder="#0d7a4c" />' +
+    '</div><div class="sub-hint">Used for this sector\'s circle/accent on the main site.</div></div>' +
+    '<div class="field"><label>Sector icon</label><select data-bind="' + base + '.icon">' +
+      iconOptions(p.icon) + '</select></div></div>';
 
   /* Experience */
   html += '<h3 class="subhead">Work Experience</h3><p class="hint">Jobs for this profile only.</p><div class="items">';
@@ -843,7 +1069,21 @@ function renderProfile(){
   }).join("");
   html += '</div><div class="add-row"><button class="btn small" type="button" data-add="' + base + '.samples">+ Add sample</button></div>';
 
+  /* Delete this sector */
+  html += '<div style="margin-top:28px;border-top:1px dashed var(--line);padding-top:16px">' +
+    '<button class="btn danger" type="button" data-del-sector="' + esc(key) + '">Delete this sector / সেক্টরটি মুছুন</button>' +
+    '<p class="hint" style="margin-top:6px">Removes this sector and everything in it. You will be asked to confirm, and it only reaches the main site when you Save.</p></div>';
+
   $("profileEditor").innerHTML = html;
+}
+function renderGigs(){
+  var list = getPath(content, "fiverr.gigs") || [];
+  $("list-gigs").innerHTML = list.map(function(g, i){
+    var base = "fiverr.gigs." + i;
+    return '<div class="item">' + itemHead(base, i) +
+      pairFields(base + ".title", "Gig title", "গিগের নাম") +
+      '<div style="margin-top:10px">' + textField(base + ".url", "Gig URL", "https://www.fiverr.com/…") + '</div></div>';
+  }).join("");
 }
 function renderAll(){
   /* plain bound fields outside lists */
@@ -852,14 +1092,81 @@ function renderAll(){
     var v = getPath(content, el.getAttribute("data-bind"));
     if (typeof v === "string" && el.value !== v) el.value = v;
   });
-  renderStats(); renderBanners(); renderProfile();
+  renderStats(); renderBanners(); renderTabs(); renderProfile(); renderGigs();
+  refreshLangWarnings(); updateContactTests(); updateStatusNow();
 }
+
+/* ================= Contact test links + status preview ================= */
+function contactHref(kind, v){
+  v = String(v || "").trim(); if (!v) return "";
+  if (kind === "phone") return "tel:" + v.replace(/[\s()-]/g, "");
+  if (kind === "email") return "mailto:" + v;
+  if (kind === "telegram"){
+    if (/^https?:\/\//i.test(v)) return v;
+    return "https://t.me/" + v.replace(/^@+/, "");
+  }
+  if (kind === "whatsapp"){
+    if (/^https?:\/\//i.test(v)) return v;
+    return "https://wa.me/" + v.replace(/\D/g, "");
+  }
+  if (kind === "fiverr") return v;
+  return "";
+}
+function updateContactTests(){
+  ["phone", "whatsapp", "email", "telegram", "fiverr"].forEach(function(k){
+    var a = $("test-" + k); if (!a) return;
+    var href = contactHref(k, getPath(content, "contact." + k));
+    if (href){ a.href = href; a.textContent = "Test link ↗ " + href; a.classList.remove("hidden"); }
+    else { a.classList.add("hidden"); a.removeAttribute("href"); }
+  });
+}
+function updateStatusNow(){
+  var el = $("statusNow"); if (!el) return;
+  var mode = getPath(content, "status.mode") || "available";
+  var lab = getPath(content, "status.labels." + mode) || {};
+  el.innerHTML = "Visitors now see: <strong>" + esc(lab.en || lab.bn || mode) + "</strong>" +
+    (lab.bn ? " · " + esc(lab.bn) : "");
+}
+
+/* ================= Sector add / delete ================= */
+$("btnAddSector").addEventListener("click", function(){
+  var key = "sector-" + Date.now().toString(36);
+  if (!content.profiles) content.profiles = {};
+  content.profiles[key] = blankProfile("", "");
+  currentProfile = key;
+  markDirty(); renderAll();
+  toast("New sector added — give it a name (English + বাংলা), a colour and an icon, add its content, then Save.");
+});
+var pendingDeleteSector = null;
+$("btnCancelDelete").addEventListener("click", function(){
+  pendingDeleteSector = null; $("delModal").classList.add("hidden");
+});
+$("btnConfirmDelete").addEventListener("click", function(){
+  if (!pendingDeleteSector) return;
+  delete content.profiles[pendingDeleteSector];
+  pendingDeleteSector = null;
+  $("delModal").classList.add("hidden");
+  currentProfile = sectorKeys()[0];
+  markDirty(); renderAll();
+  toast("Sector deleted in the editor — press Save to publish, or Reload from Firebase to undo.");
+});
 
 /* ================= Editing events (delegated) ================= */
 var editor = $("editor");
 editor.addEventListener("input", function(e){
   var t = e.target;
-  if (t.hasAttribute("data-bind")){ setPath(content, t.getAttribute("data-bind"), t.value); markDirty(); }
+  if (t.hasAttribute("data-bind")){
+    var bp = t.getAttribute("data-bind");
+    setPath(content, bp, t.value); markDirty();
+    refreshLangWarnings();
+    if (bp.indexOf("contact.") === 0) updateContactTests();
+    if (bp.indexOf("status.") === 0) updateStatusNow();
+    if (/\.color$/.test(bp)){
+      var sw = editor.querySelector('[data-colorfor="' + bp.slice(0, -6) + '"]');
+      if (sw && /^#[0-9a-fA-F]{6}$/.test(t.value)) sw.value = t.value;
+    }
+    if (/\.title\.en$/.test(bp) || /\.title\.bn$/.test(bp)) renderTabs();
+  }
   if (t.hasAttribute("data-bind-num")){
     var n = parseInt(t.value, 10); if (isNaN(n)) n = 0; n = Math.max(0, Math.min(100, n));
     setPath(content, t.getAttribute("data-bind-num"), n); markDirty();
@@ -867,8 +1174,18 @@ editor.addEventListener("input", function(e){
 });
 editor.addEventListener("change", function(e){
   var t = e.target;
-  if (t.hasAttribute("data-bind")){ setPath(content, t.getAttribute("data-bind"), t.value); markDirty(); }
+  if (t.hasAttribute("data-bind")){
+    setPath(content, t.getAttribute("data-bind"), t.value); markDirty();
+    refreshLangWarnings();
+    if (t.getAttribute("data-bind").indexOf("status.") === 0) updateStatusNow();
+  }
   if (t.hasAttribute("data-bind-check")){ setPath(content, t.getAttribute("data-bind-check"), t.checked); markDirty(); }
+  if (t.hasAttribute("data-colorfor")){
+    var cbase = t.getAttribute("data-colorfor");
+    setPath(content, cbase + ".color", t.value); markDirty();
+    var txt = editor.querySelector('[data-bind="' + cbase + '.color"]');
+    if (txt) txt.value = t.value;
+  }
   if (t.hasAttribute("data-upload")) handleUpload(t);
 });
 var BLANKS = {
@@ -882,9 +1199,18 @@ function blankFor(listPath){
   if (/\.skills$/.test(listPath)) return { name: L("",""), level: 80 };
   if (/\.languages$/.test(listPath)) return { name: L("",""), level: L("","") };
   if (/\.samples$/.test(listPath)) return blankSample();
+  if (listPath === "fiverr.gigs") return { title: L("",""), url: "" };
   return {};
 }
 editor.addEventListener("click", function(e){
+  var delSec = e.target.closest("[data-del-sector]");
+  if (delSec){
+    if (sectorKeys().length <= 1){ toast("Keep at least one sector — add a new one before deleting this one."); return; }
+    pendingDeleteSector = delSec.getAttribute("data-del-sector");
+    $("delSectorName").textContent = "“" + (sectorName(pendingDeleteSector) || pendingDeleteSector) + "”";
+    $("delModal").classList.remove("hidden");
+    return;
+  }
   var add = e.target.closest("[data-add]");
   if (add){
     var lp = add.getAttribute("data-add");
@@ -912,10 +1238,7 @@ editor.addEventListener("click", function(e){
 $("profileTabs").addEventListener("click", function(e){
   var tab = e.target.closest("[data-profile]"); if (!tab) return;
   currentProfile = tab.getAttribute("data-profile");
-  document.querySelectorAll("#profileTabs .tab").forEach(function(t){
-    t.classList.toggle("active", t === tab);
-  });
-  renderProfile();
+  renderTabs(); renderProfile(); refreshLangWarnings();
 });
 $("btnPreview").addEventListener("click", function(){
   var url = getPath(content, "settings.siteUrl");
@@ -989,23 +1312,23 @@ function handleUpload(input){
 /* ================= Admin UI language toggle (labels only; content stays EN + বাংলা side by side) ================= */
 var I18N = {
   en: { previewH: "Main portfolio site", heroH: "Hero / headline area", statsH: "Stat cards",
-    contactH: "Contact details", bannerH: "Headline / banner items", profilesH: "The three profiles",
+    contactH: "Contact details", bannerH: "Headline / banner items", profilesH: "Sectors / profiles",
     previewHint: "Paste your live portfolio address here to preview it. This admin site is separate — the portfolio itself has no admin button and never links here.",
     heroHint: "Name, title and intro shown at the top of the portfolio. Fill both English and বাংলা — the main site's language switch uses these.",
     statsHint: "Short numbers shown on the hero, e.g. “3+ Years experience”.",
-    contactHint: "Shown when a visitor taps Contact on the main site.",
+    contactHint: "Shown when a visitor taps Contact on the main site. Use each Test link to check exactly what a visitor's tap will open — Telegram goes to t.me, WhatsApp to wa.me, email opens their mail app.",
     bannerHint: "Announcements shown as a rotating banner on the main site — one at a time, changing every 5 seconds with a fade/slide, looping in this list's order (hover/tap pauses it). Add text, an optional image and link, switch each one on or off, and use ↑ ↓ to change the rotation order.",
-    profilesHint: "Each profile keeps its own Experience, Education, Skills, Languages and Work Samples.",
+    profilesHint: "Each sector has its own edit tab — its own Experience, Education, Skills, Languages and Work Samples. Add a new sector any time, or delete one from inside its tab.",
     footNote: "Saving writes everything to Firebase (portfolio/content). The main portfolio reads the same place and updates in real time for every visitor — no need to re-upload the portfolio file.",
     langBtn: "বাংলা" },
   bn: { previewH: "মূল পোর্টফোলিও সাইট", heroH: "হিরো / হেডলাইন অংশ", statsH: "স্ট্যাট কার্ড",
-    contactH: "যোগাযোগের তথ্য", bannerH: "হেডলাইন / ব্যানার আইটেম", profilesH: "তিনটি প্রোফাইল",
+    contactH: "যোগাযোগের তথ্য", bannerH: "হেডলাইন / ব্যানার আইটেম", profilesH: "সেক্টর / প্রোফাইল",
     previewHint: "লাইভ পোর্টফোলিওর ঠিকানা এখানে বসালে প্রিভিউ খুলতে পারবেন। এই অ্যাডমিন সাইট আলাদা — মূল পোর্টফোলিওতে কোনো অ্যাডমিন বাটন নেই।",
     heroHint: "পোর্টফোলিওর একদম উপরে দেখানো নাম, টাইটেল ও পরিচিতি। English ও বাংলা দুটোই পূরণ করুন — মূল সাইটের ভাষা বদলের বাটন এগুলোই ব্যবহার করে।",
     statsHint: "হিরোতে দেখানো ছোট সংখ্যা, যেমন “3+ Years experience”。",
-    contactHint: "মূল সাইটে Contact-এ ট্যাপ করলে এগুলো দেখা যাবে।",
+    contactHint: "মূল সাইটে Contact-এ ট্যাপ করলে এগুলো দেখা যাবে। প্রতিটা Test link দিয়ে যাচাই করুন ভিজিটরের ট্যাপে ঠিক কী খুলবে — Telegram যাবে t.me-তে, WhatsApp wa.me-তে, ইমেইল খুলবে মেইল অ্যাপ।",
     bannerHint: "মূল সাইটে ঘূর্ণায়মান ব্যানার হিসেবে দেখানো ঘোষণা — একবারে একটা, প্রতি ৫ সেকেন্ডে ফেড/স্লাইড হয়ে বদলায়, এই তালিকার ক্রমেই ঘুরতে থাকে (হোভার/ট্যাপ করলে থামে)। লেখা, চাইলে ছবি ও লিংক যোগ করুন, প্রতিটা আলাদা করে অন/অফ করুন, আর ↑ ↓ দিয়ে ঘূর্ণনের ক্রম বদলান।",
-    profilesHint: "প্রতিটা প্রোফাইলের নিজের Experience, Education, Skills, Languages ও Work Samples আলাদা থাকে।",
+    profilesHint: "প্রতিটা সেক্টরের নিজের এডিট ট্যাব আছে — নিজের Experience, Education, Skills, Languages ও Work Samples। যেকোনো সময় নতুন সেক্টর যোগ করা যাবে, আর ট্যাবের ভেতর থেকেই সেক্টর মোছা যাবে।",
     footNote: "Save করলে সবকিছু Firebase-এ (portfolio/content) যাবে। মূল পোর্টফোলিও একই জায়গা থেকে পড়ে, তাই সব ভিজিটরের কাছে সাথে সাথে আপডেট হবে — পোর্টফোলিও ফাইল আবার আপলোড করতে হবে না।",
     langBtn: "English" }
 };
@@ -1018,6 +1341,15 @@ $("btnLang").addEventListener("click", function(){
   });
   $("btnLang").textContent = dict.langBtn;
 });
+
+/* ================= Live clock (top bar, beside the brand) ================= */
+function tickClock(){
+  var el = $("liveClock"); if (!el) return;
+  var d = new Date();
+  el.textContent = d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" }) +
+    " · " + d.toLocaleTimeString("en-GB");
+}
+setInterval(tickClock, 1000); tickClock();
 
 /* ================= Boot ================= */
 initGate();
