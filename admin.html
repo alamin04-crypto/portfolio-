@@ -45,6 +45,10 @@
   .gate-card label{display:block;font-weight:600;font-size:14px;margin:14px 0 6px}
   .gate-err{display:none;background:var(--danger-bg);color:var(--danger);border-radius:8px;
     padding:9px 12px;font-size:14px;margin-top:14px}
+  .link-btn{background:none;border:none;color:var(--accent);font-weight:600;font-size:14.5px;
+    padding:6px 2px;text-decoration:underline;text-underline-offset:3px;text-align:left}
+  .link-btn:hover{filter:brightness(1.1)}
+  .gate-input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
   .note-box{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:11px 13px;
     font-size:13.5px;margin-top:18px;line-height:1.55}
   .note-box strong{color:inherit}
@@ -185,6 +189,22 @@
       <input type="password" id="passEnter" autocomplete="current-password"
         style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px" />
       <button class="btn primary" id="btnUnlock" style="width:100%;margin-top:18px">Unlock / খুলুন</button>
+      <div style="margin-top:10px">
+        <button class="link-btn" id="btnForgot" type="button">Forgot passcode? Reset with code / পাসকোড ভুলে গেছেন? কোড দিয়ে রিসেট করুন</button>
+      </div>
+    </div>
+    <div id="gateReset" class="hidden">
+      <p style="color:var(--ink2);font-size:14.5px;margin:0 0 6px">Enter your reset code, then set a new passcode. The new passcode is saved in this browser and opens the panel right away.<br />রিসেট কোডটা দিন, তারপর নতুন পাসকোড সেট করুন — নতুন পাসকোড এই ব্রাউজারে সেভ হয়ে প্যানেল খুলে যাবে।</p>
+      <label for="resetCode">Reset code / রিসেট কোড</label>
+      <input type="text" id="resetCode" inputmode="numeric" autocomplete="off" class="gate-input" placeholder="Enter reset code" />
+      <label for="resetNew">New passcode / নতুন পাসকোড</label>
+      <input type="password" id="resetNew" autocomplete="new-password" class="gate-input" />
+      <label for="resetConfirm">Confirm new passcode / আবার লিখুন</label>
+      <input type="password" id="resetConfirm" autocomplete="new-password" class="gate-input" />
+      <button class="btn primary" id="btnDoReset" type="button" style="width:100%;margin-top:18px">Reset &amp; save new passcode / রিসেট করে সেভ করুন</button>
+      <div style="margin-top:10px">
+        <button class="link-btn" id="btnCancelReset" type="button">← Back to unlock / ফিরে যান</button>
+      </div>
     </div>
     <div class="gate-err" id="gateErr"></div>
     <div class="note-box">
@@ -193,6 +213,8 @@
       page itself, so <strong>keep this admin site's URL private and never share it publicly</strong>.
       Real protection comes from your Firebase Realtime Database rules.
       <br />এই পাসকোড শুধু সাধারণ সুরক্ষা — এই সাইটের লিংক কারো সাথে শেয়ার করবেন না।
+      <br /><strong>Forgot your passcode?</strong> On the unlock screen, use the “Forgot passcode?” link and your private reset code to set a new one. Keep that reset code private too — anyone with it can reset the passcode on this browser.
+      <br />পাসকোড ভুলে গেলে আনলক স্ক্রিনে “Forgot passcode?” লিংক আর আপনার গোপন রিসেট কোড দিয়ে নতুন পাসকোড সেট করুন।
     </div>
   </div>
 </div>
@@ -248,29 +270,29 @@
       </div>
       <div class="lang-warn hidden" data-warn="hero.bio">One language is empty — fill both so the main site never shows a blank. / একটা ভাষা খালি আছে, দুটোই পূরণ করুন।</div>
       <h3 class="subhead" data-i18n="profilePhotoH">Profile photo</h3>
-      <p class="hint" data-i18n="profilePhotoHint">The portrait shown in the centre of the hub and at the top of every profile on the main site. Upload a new photo or paste an image link, then press Save — the photo is stored in Firebase (portfolio/content, hero.photo) together with everything else.</p>
+      <p class="hint" data-i18n="profilePhotoHint">The portrait shown in the centre of the hub and at the top of every profile on the main site. Upload a new photo or paste an image link — the photo is published to Firebase (portfolio/content, hero.photo) right away, so the main site updates without waiting for the big Save button.</p>
       <div class="profile-photo-row">
         <div class="profile-preview">
           <img id="profilePhotoPreview" class="hidden" alt="Current profile photo preview"
             onerror="this.classList.add('hidden');var e=document.getElementById('profilePhotoEmpty');e.classList.remove('hidden');e.textContent='Photo failed to load — check the link, or upload the file instead. / ছবিটা লোড হয়নি — লিংকটা দেখুন, অথবা ফাইল আপলোড করুন।';" />
-          <div class="thumb-empty" id="profilePhotoEmpty">No custom photo saved yet — the main site is showing its built-in portrait. Upload a photo or paste a link, then press Save. / এখনো কাস্টম ছবি সেভ হয়নি — মূল সাইটে বিল্ট-ইন পোর্ট্রেটটাই দেখাচ্ছে।</div>
+          <div class="thumb-empty" id="profilePhotoEmpty">No custom photo saved yet — the main site is showing its built-in portrait. Upload a photo or paste a link — it publishes right away. / এখনো কাস্টম ছবি সেভ হয়নি — মূল সাইটে বিল্ট-ইন পোর্ট্রেটটাই দেখাচ্ছে।</div>
           <div class="cap">Preview · 450 × 570</div>
         </div>
         <div class="profile-fields">
           <div class="field">
             <label>Photo — image URL / ছবির লিংক</label>
             <input type="url" data-bind="hero.photo" placeholder="https://…" />
-            <div class="sub-hint">Paste a direct image link, or use the upload below — either way, press Save at the bottom to publish.</div>
+            <div class="sub-hint">Paste a direct image link — it is published to the main site as soon as you finish entering it. Or use the upload below.</div>
           </div>
           <div class="field">
             <label>Photo — upload a file / ছবি আপলোড করুন</label>
             <input type="file" accept="image/*" data-profile-upload="hero.photo" />
-            <div class="sub-hint">Uploads go to Firebase Storage (portfolio/profile/). If Storage is not enabled, the photo is saved inside the database instead (keep it under ~700 KB). Best size: 900 × 1140 px portrait, face near the centre-top.</div>
+            <div class="sub-hint">The photo publishes itself as soon as the upload finishes. It goes to Firebase Storage (portfolio/profile/) when Storage is available; on this project Storage is not enabled, so the photo is embedded inside the database instead (keep it under ~700 KB). Best size: 900 × 1140 px portrait, face near the centre-top.</div>
             <div class="upload-status" id="profilePhotoStatus"></div>
           </div>
           <div>
             <button class="btn small danger" id="btnClearProfilePhoto" type="button">Remove custom photo / কাস্টম ছবি সরান</button>
-            <div class="sub-hint" style="margin-top:4px">Clears the saved photo so the main site goes back to its built-in portrait after you Save.</div>
+            <div class="sub-hint" style="margin-top:4px">Publishes right away — the main site goes back to its built-in portrait as soon as the removal reaches Firebase.</div>
           </div>
         </div>
       </div>
@@ -454,6 +476,7 @@ var BUILTIN_CONFIG = {
 };
 var LS_CFG = "adminPanel.firebaseConfig";
 var LS_PASS = "adminPanel.passcodeHash";
+var RESET_CODE = "4071041";
 var NODE = "portfolio/content";
 
 /* ================= Default content (used only when the database node is empty) ================= */
@@ -712,6 +735,47 @@ function initGate(){
   });
   $("btnUnlock").addEventListener("click", tryUnlock);
   $("passEnter").addEventListener("keydown", function(e){ if (e.key === "Enter") tryUnlock(); });
+
+  /* ---- Forgot passcode: reset with code ----
+     The owner asked for a fixed reset code (4071041). Entering it lets
+     anyone on this browser replace the stored passcode hash with a new
+     one and open the panel — forgetting the passcode is no longer a
+     lockout. The code lives in this file by the owner's explicit choice. */
+  function showReset(){
+    var e = $("gateErr"); e.style.display = "none"; e.textContent = "";
+    $("gateUnlock").classList.add("hidden");
+    $("gateSet").classList.add("hidden");
+    $("gateReset").classList.remove("hidden");
+    $("gateSub").textContent = "Reset your passcode with your reset code.";
+    var rc = $("resetCode"); if (rc){ rc.value = ""; rc.focus(); }
+  }
+  function hideReset(){
+    var e = $("gateErr"); e.style.display = "none"; e.textContent = "";
+    $("gateReset").classList.add("hidden");
+    var storedNow = null; try { storedNow = localStorage.getItem(LS_PASS); } catch(err){}
+    if (storedNow){ $("gateUnlock").classList.remove("hidden"); $("gateSub").textContent = "Enter your passcode to open the editor."; }
+    else { $("gateSet").classList.remove("hidden"); }
+  }
+  function doReset(){
+    var code = String($("resetCode").value || "").trim();
+    var a = $("resetNew").value, b = $("resetConfirm").value;
+    if (code !== RESET_CODE) return gateError("Wrong reset code. / ভুল রিসেট কোড।");
+    if (a.length < 4) return gateError("New passcode must be at least 4 characters. / নতুন পাসকোড কমপক্ষে ৪ অক্ষর হতে হবে।");
+    if (a !== b) return gateError("New passcodes do not match. / নতুন পাসকোড দুটো মিলছে না।");
+    sha256(a).then(function(h){
+      try { localStorage.setItem(LS_PASS, h); } catch(e){}
+      $("resetCode").value = ""; $("resetNew").value = ""; $("resetConfirm").value = "";
+      $("gateReset").classList.add("hidden");
+      toast("Passcode reset ✓ New passcode saved. / পাসকোড রিসেট হয়েছে ✓");
+      openApp();
+    });
+  }
+  var bf = $("btnForgot"); if (bf) bf.addEventListener("click", showReset);
+  var bc = $("btnCancelReset"); if (bc) bc.addEventListener("click", hideReset);
+  var bd = $("btnDoReset"); if (bd) bd.addEventListener("click", doReset);
+  ["resetCode","resetNew","resetConfirm"].forEach(function(id){
+    var el = $(id); if (el) el.addEventListener("keydown", function(e){ if (e.key === "Enter") doReset(); });
+  });
   function tryUnlock(){
     sha256($("passEnter").value).then(function(h){
       var stored2 = null; try { stored2 = localStorage.getItem(LS_PASS); } catch(e){}
@@ -893,6 +957,20 @@ $("btnReload2").addEventListener("click", reloadFromFirebase);
 
 /* ================= Save ================= */
 $("btnSave").addEventListener("click", function(){
+  /* Never let a Save race a profile photo that is still uploading: the
+     photo reaches content.hero.photo only when its upload finishes, so a
+     Save pressed mid-upload would write the old (empty) photo value.
+     Wait for the upload to settle, then run the save again. */
+  if (profileUploadPromise){
+    var wm = $("saveMsg"); wm.className = "msg";
+    wm.textContent = "Waiting for the profile photo upload to finish, then saving… / ছবির আপলোড শেষ হওয়ার অপেক্ষা করছি, তারপর সেভ হবে…";
+    var pending = profileUploadPromise;
+    Promise.race([pending, new Promise(function(res){ setTimeout(res, 25000); })]).then(function(){
+      if (profileUploadPromise === pending) profileUploadPromise = null;
+      $("btnSave").click();
+    });
+    return;
+  }
   if (!db){
     var nm = $("saveMsg"); nm.className = "msg err";
     nm.textContent = "Not connected — nothing was saved. Check the status pill at the top, then press Save again. / কানেক্ট হয়নি — কিছুই সেভ হয়নি।";
@@ -1143,7 +1221,7 @@ function updateProfilePhotoPreview(){
     img.removeAttribute("src");
     img.classList.add("hidden");
     empty.classList.remove("hidden");
-    empty.textContent = "No custom photo saved yet — the main site is showing its built-in portrait. Upload a photo or paste a link, then press Save. / এখনো কাস্টম ছবি সেভ হয়নি — মূল সাইটে বিল্ট-ইন পোর্ট্রেটটাই দেখাচ্ছে।";
+    empty.textContent = "No custom photo saved yet — the main site is showing its built-in portrait. Upload a photo or paste a link — it publishes right away. / এখনো কাস্টম ছবি সেভ হয়নি — মূল সাইটে বিল্ট-ইন পোর্ট্রেটটাই দেখাচ্ছে।";
   }
 }
 $("btnClearProfilePhoto").addEventListener("click", function(){
@@ -1154,9 +1232,19 @@ $("btnClearProfilePhoto").addEventListener("click", function(){
   setPath(content, "hero.photo", "");
   markDirty(); renderAll();
   var st = $("profilePhotoStatus");
-  if (st){ st.className = "upload-status warn";
-    st.textContent = "Custom photo removed in the editor — press Save so the main site goes back to the built-in portrait."; }
-  toast("Profile photo cleared — press Save to publish.");
+  if (st){ st.className = "upload-status"; st.textContent = "Removing the custom photo from Firebase…"; }
+  persistProfilePhoto("").then(function(saved){
+    var st2 = $("profilePhotoStatus"); if (!st2) return;
+    if (saved){
+      st2.className = "upload-status ok";
+      st2.textContent = "Custom photo removed in Firebase ✓ The main site is back to its built-in portrait. / কাস্টম ছবি সরানো হয়েছে ✓";
+      toast("Profile photo removed ✓ Main site shows the built-in portrait.");
+    } else {
+      st2.className = "upload-status warn";
+      st2.textContent = "Removed in the editor but not published by itself (not connected?) — press Save to publish the removal.";
+      toast("Photo cleared in the editor — press Save to publish.");
+    }
+  });
 });
 
 /* ================= Contact test links + status preview ================= */
@@ -1241,7 +1329,26 @@ editor.addEventListener("change", function(e){
   if (t.hasAttribute("data-bind")){
     setPath(content, t.getAttribute("data-bind"), t.value); markDirty();
     refreshLangWarnings();
-    if (t.getAttribute("data-bind") === "hero.photo") updateProfilePhotoPreview();
+    if (t.getAttribute("data-bind") === "hero.photo"){
+      updateProfilePhotoPreview();
+      /* A pasted photo link publishes itself, like an upload does —
+         the owner should not have to discover the big Save button
+         before the main site shows the new photo. */
+      var pv = String(t.value || "").trim();
+      var pst = $("profilePhotoStatus");
+      if (pst){ pst.className = "upload-status"; pst.textContent = "Saving the photo link to Firebase…"; }
+      persistProfilePhoto(pv).then(function(saved){
+        var pst2 = $("profilePhotoStatus"); if (!pst2) return;
+        if (saved){
+          pst2.className = "upload-status ok";
+          pst2.textContent = pv ? "Photo link saved to Firebase ✓ The main site now shows this photo."
+                                : "Photo link cleared in Firebase ✓ The main site is back to its built-in portrait.";
+        } else {
+          pst2.className = "upload-status warn";
+          pst2.textContent = "Could not publish the link by itself (not connected?) — press Save at the bottom to publish it.";
+        }
+      });
+    }
     if (t.getAttribute("data-bind").indexOf("status.") === 0) updateStatusNow();
   }
   if (t.hasAttribute("data-bind-check")){ setPath(content, t.getAttribute("data-bind-check"), t.checked); markDirty(); }
@@ -1375,15 +1482,39 @@ function handleUpload(input){
   }
 }
 
-/* ================= Profile photo upload: Storage first, data-URL fallback =================
-   Same pattern as sample photos, but the result lands on hero.photo — the
-   one profile portrait the main site shows in the hub centre and at the
-   top of every profile view. */
+/* ================= Profile photo: upload publishes immediately =================
+   Why this exists: the live database showed hero.photo stuck at "" while
+   every other edit saved fine. The old flow only STAGED an uploaded photo
+   in the editor — it reached Firebase solely through the big Save button,
+   and Firebase Storage is not enabled on this project (both candidate
+   buckets answer 404), so the Storage-first attempt could stall and the
+   photo often never landed at all. Now, as soon as a photo is ready
+   (Storage URL or embedded copy) it is written straight to the
+   portfolio/content hero.photo child and read back to verify — uploading
+   IS updating, and the status line says so. The big Save still carries
+   the same value with everything else. */
+var profileUploadPromise = null;
+function persistProfilePhoto(value){
+  if (!db) return Promise.resolve(false);
+  return db.ref(NODE + "/hero/photo").set(value).then(function(){
+    return db.ref(NODE + "/hero/photo").once("value");
+  }).then(function(snap){
+    return String(snap.val() || "") === String(value || "");
+  }).catch(function(){ return false; });
+}
+
 function handleProfileUpload(input){
   var file = input.files && input.files[0]; if (!file) return;
   var statusEl = $("profilePhotoStatus");
   function say(cls, msg){ if (statusEl){ statusEl.className = "upload-status " + cls; statusEl.textContent = msg; } }
   if (!file.type || file.type.indexOf("image/") !== 0){ say("err", "That file is not an image. / ওটা ছবির ফাইল নয়।"); return; }
+  var dirtyBeforeUpload = dirty;
+  /* The main Save waits on this promise so it can never overwrite the
+     photo with the old value mid-upload. It resolves when the photo has
+     been staged AND its immediate publish attempt has settled. */
+  var resolveStage = null;
+  profileUploadPromise = new Promise(function(res){ resolveStage = res; });
+  function settleStage(){ if (resolveStage){ resolveStage(); resolveStage = null; } profileUploadPromise = null; }
 
   function useDataUrl(){
     var reader = new FileReader();
@@ -1404,34 +1535,52 @@ function handleProfileUpload(input){
       img.onerror = function(){ finish(dataUrl, true); };
       img.src = dataUrl;
     };
-    reader.onerror = function(){ say("err", "Could not read that file."); };
+    reader.onerror = function(){ say("err", "Could not read that file."); settleStage(); };
     reader.readAsDataURL(file);
   }
   function finish(url, isDataUrl){
     setPath(content, "hero.photo", url);
     markDirty(); renderAll();
     input.value = "";
+    var kb = isDataUrl ? Math.round(url.length * 3 / 4 / 1024) : 0;
     var newStatus = $("profilePhotoStatus");
-    if (isDataUrl){
-      var kb = Math.round(url.length * 3 / 4 / 1024);
-      if (newStatus){ newStatus.className = "upload-status warn";
-        newStatus.textContent = "Saved inside the database as an embedded photo (~" + kb +
-          " KB). Warning: large embedded photos slow the site — under ~700 KB is best. Press Save to publish."; }
-      toast("Profile photo embedded in database (Storage unavailable). Press Save.");
-    } else {
-      if (newStatus){ newStatus.className = "upload-status ok";
-        newStatus.textContent = "Uploaded to Firebase Storage ✓ Press Save to publish the new profile photo."; }
-      toast("Profile photo uploaded to Storage ✓ Press Save.");
-    }
+    if (newStatus){ newStatus.className = "upload-status";
+      newStatus.textContent = "Saving the new profile photo to Firebase…"; }
+    persistProfilePhoto(url).then(function(saved){
+      var st = $("profilePhotoStatus");
+      if (saved){
+        if (!dirtyBeforeUpload) markClean("Profile photo saved ✓ — the main portfolio now shows the new photo.");
+        if (st){ st.className = "upload-status ok";
+          st.textContent = isDataUrl
+            ? "Profile photo saved to Firebase ✓ (embedded copy, ~" + kb + " KB — Storage is not enabled on this project, so the photo lives inside the database.) The main site now shows it — no need to press Save for the photo."
+            : "Profile photo saved to Firebase ✓ The main site now shows the new photo — no need to press Save for the photo."; }
+        toast("Profile photo updated ✓ The main site now shows it.");
+      } else {
+        if (st){ st.className = "upload-status warn";
+          st.textContent = "Photo is ready in the editor but could not be published by itself (not connected?). Press Save at the bottom to publish it with everything else."; }
+        toast("Photo ready in the editor — press Save to publish it.");
+      }
+      settleStage();
+    });
   }
   if (storage){
-    say("", "Uploading profile photo to Firebase Storage…");
+    say("", "Preparing the profile photo…");
     var safeName = Date.now() + "-" + file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     var ref = storage.ref("portfolio/profile/" + safeName);
-    ref.put(file).then(function(){ return ref.getDownloadURL(); }).then(function(url){
+    var settled = false;
+    /* Storage gets 20 seconds at most: when Storage is not enabled the
+       upload can hang on retries, which used to leave the photo stuck on
+       "Uploading…" forever. On timeout, fall back to the embedded copy. */
+    var uploadPromise = ref.put(file).then(function(){ return ref.getDownloadURL(); });
+    var timeoutPromise = new Promise(function(_, reject){
+      setTimeout(function(){ reject(new Error("storage-timeout")); }, 20000);
+    });
+    Promise.race([uploadPromise, timeoutPromise]).then(function(url){
+      if (settled) return; settled = true;
       finish(url, false);
     }).catch(function(){
-      say("warn", "Storage upload failed — saving the photo inside the database instead…");
+      if (settled) return; settled = true;
+      say("warn", "Firebase Storage is not available — saving the photo inside the database instead…");
       useDataUrl();
     });
   } else {
@@ -1444,7 +1593,7 @@ function handleProfileUpload(input){
 var I18N = {
   en: { previewH: "Main portfolio site", heroH: "Hero / headline area", statsH: "Stat cards",
     profilePhotoH: "Profile photo",
-    profilePhotoHint: "The portrait shown in the centre of the hub and at the top of every profile on the main site. Upload a new photo or paste an image link, then press Save — the photo is stored in Firebase (portfolio/content, hero.photo) together with everything else.",
+    profilePhotoHint: "The portrait shown in the centre of the hub and at the top of every profile on the main site. Upload a new photo or paste an image link — the photo is published to Firebase (portfolio/content, hero.photo) right away, so the main site updates without waiting for the big Save button.",
     contactH: "Contact details", bannerH: "Headline / banner items", profilesH: "Sectors / profiles",
     previewHint: "Paste your live portfolio address here to preview it. This admin site is separate — the portfolio itself has no admin button and never links here.",
     heroHint: "Name, title and intro shown at the top of the portfolio. Fill both English and বাংলা — the main site's language switch uses these.",
@@ -1456,7 +1605,7 @@ var I18N = {
     langBtn: "বাংলা" },
   bn: { previewH: "মূল পোর্টফোলিও সাইট", heroH: "হিরো / হেডলাইন অংশ", statsH: "স্ট্যাট কার্ড",
     profilePhotoH: "প্রোফাইল ছবি",
-    profilePhotoHint: "মূল সাইটে হাবের মাঝখানে আর প্রতিটা প্রোফাইলের উপরে দেখানো পোর্ট্রেট ছবি। নতুন ছবি আপলোড করুন অথবা ছবির লিংক বসান, তারপর Save চাপুন — ছবিটা বাকি সবকিছুর সাথে Firebase-এ (portfolio/content, hero.photo) সেভ হয়।",
+    profilePhotoHint: "মূল সাইটে হাবের মাঝখানে আর প্রতিটা প্রোফাইলের উপরে দেখানো পোর্ট্রেট ছবি। নতুন ছবি আপলোড করুন অথবা ছবির লিংক বসান — ছবিটা সাথে সাথে Firebase-এ (portfolio/content, hero.photo) পাবলিশ হয়ে যায়, তাই বড় Save বাটনের জন্য অপেক্ষা করতে হয় না।",
     contactH: "যোগাযোগের তথ্য", bannerH: "হেডলাইন / ব্যানার আইটেম", profilesH: "সেক্টর / প্রোফাইল",
     previewHint: "লাইভ পোর্টফোলিওর ঠিকানা এখানে বসালে প্রিভিউ খুলতে পারবেন। এই অ্যাডমিন সাইট আলাদা — মূল পোর্টফোলিওতে কোনো অ্যাডমিন বাটন নেই।",
     heroHint: "পোর্টফোলিওর একদম উপরে দেখানো নাম, টাইটেল ও পরিচিতি। English ও বাংলা দুটোই পূরণ করুন — মূল সাইটের ভাষা বদলের বাটন এগুলোই ব্যবহার করে।",
