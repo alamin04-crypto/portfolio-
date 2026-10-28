@@ -325,14 +325,102 @@
       .fiverr-soon b{font-family:"Sora","Hind Siliguri",sans-serif;font-size:14.5px;display:block;margin-bottom:3px}
       .fiverr-soon p{font-size:13.5px;color:var(--ink-soft)}
       .foot-offline{font-size:12.5px;font-weight:600;color:var(--ink-faint)}
+
+      /* ---------- social platforms (head bar, hub, contact popup) ----------
+         Links are read from the shared content (social / socials /
+         contact fields Admin saves). A platform with no link saved is
+         not rendered at all — no dead or invented links. */
+      .head-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:0 0 11px}
+      .head-bar[hidden]{display:none !important}
+      .head-bar-label{font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint)}
+      .social-slot{display:inline-flex;gap:8px;flex-wrap:wrap;align-items:center}
+      .social-slot:empty{display:none}
+      .soc{
+        display:inline-flex;align-items:center;gap:8px;
+        padding:7px 13px 7px 10px;border-radius:999px;
+        background:var(--surface);border:1.5px solid var(--line);
+        color:var(--ink);text-decoration:none;
+        font-family:"Sora","Hind Siliguri",sans-serif;font-weight:700;font-size:13.5px;
+        box-shadow:var(--shadow-sm);
+        transition:transform .2s,border-color .2s,color .2s;
+      }
+      .soc svg{flex:none}
+      .soc:hover{transform:translateY(-2px)}
+      .soc-instagram:hover{border-color:#b13a7d;color:#b13a7d}
+      .soc-facebook:hover{border-color:#2b5ea7;color:#2b5ea7}
+      .soc-linkedin:hover{border-color:#2f6f9f;color:#2f6f9f}
+      .soc-telegram:hover{border-color:var(--teal-bright);color:var(--teal)}
+      button[data-intro][hidden]{display:none !important}
+      /* the intro-video button sits directly under the live clock */
+      .nav-left{display:flex;flex-direction:column;gap:7px;flex:none;max-width:284px}
+      .btn-intro-clock{
+        align-self:flex-start;background:var(--brick);color:#fff;
+        font-size:12.5px;line-height:1.4;padding:8px 12px;border-radius:10px;
+        text-align:left;box-shadow:0 8px 20px -10px rgba(126,42,26,.6);
+      }
+      .btn-intro-clock:hover{transform:translateY(-1px)}
+      .btn-intro-clock .play-disc{
+        width:20px;height:20px;flex:none;border-radius:50%;
+        background:rgba(255,255,255,.94);color:var(--brick-deep);
+        display:grid;place-items:center;
+      }
+      .btn-intro-clock.is-off{background:var(--surface-2);color:var(--ink-soft);box-shadow:none;cursor:default}
+      .btn-intro-clock.is-off:hover{transform:none}
+      .btn-intro-clock.is-off .play-disc{background:var(--line);color:var(--ink-faint)}
+      .intro-btn-text{display:block}
+      .intro-state{display:block;font-size:10.5px;font-weight:700;opacity:.85;margin-top:2px}
+      .intro-state[hidden]{display:none !important}
+      @media (max-width:560px){ .nav-left{max-width:210px} .btn-intro-clock{font-size:11.5px;padding:7px 10px} }
+      .hub-social{margin:26px auto 0;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+      .hub-social[hidden]{display:none !important}
+      .modal-socials{margin:2px 0 14px}
+      .modal-socials:empty{display:none}
+
+      /* ---------- intro video ("about me" video) ---------- */
+      .intro-cta{margin:24px auto 0;display:flex;flex-direction:column;align-items:center;gap:10px;max-width:680px}
+      .intro-cta[hidden]{display:none !important}
+      .btn-intro{
+        background:var(--brick);color:#fff;
+        box-shadow:0 14px 30px -12px rgba(126,42,26,.65);
+        font-size:clamp(15px,2.4vw,17.5px);line-height:1.45;
+        padding:15px 26px;border-radius:14px;text-wrap:balance;
+      }
+      .btn-intro:hover{transform:translateY(-2px)}
+      .btn-intro .play-disc{
+        width:30px;height:30px;flex:none;border-radius:50%;
+        background:rgba(255,255,255,.94);color:var(--brick-deep);
+        display:grid;place-items:center;
+      }
+      .intro-note{font-size:13.5px;font-weight:600;color:var(--ink-faint);text-align:center}
+      .modal-video{width:min(780px,100%)}
+      .modal-video h3{font-size:clamp(20px,3vw,25px);margin-bottom:6px;padding-right:40px}
+      .modal-video .intro-sub{font-size:14.5px;color:var(--ink-soft);margin-bottom:18px;padding-right:30px}
+      .intro-player{
+        position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;
+        background:#0a201e;border:1px solid var(--line);
+      }
+      .intro-player:empty{display:none}
+      .intro-player video,.intro-player iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#000}
+      .intro-link-card{
+        position:absolute;inset:0;display:flex;flex-direction:column;gap:10px;
+        align-items:center;justify-content:center;color:#fff;text-decoration:none;
+        font-family:"Sora","Hind Siliguri",sans-serif;font-weight:700;font-size:16px;
+        background:radial-gradient(480px 300px at 50% 30%, rgba(42,157,143,.5), transparent), #0a201e;
+      }
     </style>
   </head>
   <body>
     <header class="nav">
       <div class="wrap nav-in">
-        <div class="nav-clock" role="timer" aria-label="Current date and time in Bangladesh">
-          <span class="nc-date" id="navDate">&nbsp;</span>
-          <span class="nc-time mono" id="navTime">&nbsp;</span>
+        <div class="nav-left">
+          <div class="nav-clock" role="timer" aria-label="Current date and time in Bangladesh">
+            <span class="nc-date" id="navDate">&nbsp;</span>
+            <span class="nc-time mono" id="navTime">&nbsp;</span>
+          </div>
+          <button type="button" class="btn btn-intro-clock is-off" data-intro disabled aria-disabled="true">
+            <span class="play-disc"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg></span>
+            <span class="intro-btn-text"><span data-i18n="introBtn">Don't want to read about me? Click here — watch &amp; hear it all in a video</span><small class="intro-state" data-i18n="introComing">Video coming soon — not uploaded yet</small></span>
+          </button>
         </div>
         <button class="brand" data-goto="hub" aria-label="Back to the profile hub">
           <span class="brand-mark">AA</span>
@@ -348,6 +436,10 @@
           <span class="lang-switch" role="group" aria-label="Language"><button type="button" data-lang="bn">বাংলা</button><button type="button" data-lang="en">English</button></span>
         </nav>
       </div>
+      <div class="wrap head-bar" id="headBar" hidden>
+        <span class="head-bar-label" data-i18n="followMe">Follow me</span>
+        <div class="social-slot" data-social-slot></div>
+      </div>
     </header>
 
     <main id="top">
@@ -361,6 +453,7 @@
             <h1 class="rise d1"><span data-i18n="hiIm">Hi, I'm</span> <span class="accent">Al&nbsp;Amin</span>.</h1>
             <p class="hub-sub rise d2">Customer Support Specialist · Media Buyer · Video Editor</p>
             <p class="hub-hint rise d3">One person, <b>three specialist profiles</b>, kept in one organised system. <b>Tap a circle</b> to open that profile — work experience, education, skills and samples are all inside.</p>
+
 
             <div class="hub-stage rise d3">
               <div class="hub-ring"></div>
@@ -402,6 +495,11 @@
               <div class="stat"><b>3</b><span>Separate specialist profiles</span></div>
               <div class="stat"><b>3</b><span>Languages — Bangla, English, Hindi</span></div>
               <div class="stat"><b>20+</b><span>Professional tools in daily use</span></div>
+            </div>
+
+            <div class="hub-social rise d4" id="hubSocial" hidden>
+              <span class="head-bar-label" data-i18n="followMe">Follow me</span>
+              <div class="social-slot" data-social-slot></div>
             </div>
 
             <div class="cv-bar rise d4">
@@ -1277,6 +1375,7 @@
           </div>
         </div>
         <span class="modal-status st-available" id="modalStatus"><span class="pulse-dot"></span><span id="modalStatusText">Available — free for work</span></span>
+        <div class="social-slot modal-socials" data-social-slot></div>
         <a class="c-row" href="tel:+8801619154599">
           <span class="c-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
           <span><small>Phone</small><b>+88 01619154599</b></span>
@@ -1298,6 +1397,18 @@
           <span><small>Location</small><b>Bangladesh</b></span>
         </div>
         <a class="btn btn-fiverr" id="modalFiverrBtn" data-i18n="hireFiverr" href="https://www.fiverr.com" target="_blank" rel="noopener">Hire me on Fiverr</a>
+      </div>
+    </div>
+
+    <!-- ============ INTRO VIDEO MODAL ============ -->
+    <div class="modal-overlay" id="introModal" role="dialog" aria-modal="true" aria-labelledby="introTitle" hidden>
+      <div class="modal modal-video">
+        <button class="modal-close" data-intro-close aria-label="Close intro video">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <h3 id="introTitle" data-i18n="introTitle">About me — in video</h3>
+        <p class="intro-sub" data-i18n="introSub">No need to read through the whole portfolio — press play and watch &amp; hear everything about me.</p>
+        <div class="intro-player" id="introPlayer"></div>
       </div>
     </div>
 
@@ -1548,6 +1659,13 @@
             ctaBtn: "Contact me on Fiverr",
             ctaP1: "Replies in English · Hindi · Bangla", ctaP2: "On-time delivery", ctaP3: "Honest, upfront pricing",
             footLoc: "Bangladesh", playVideo: "Watch video",
+            followMe: "Follow me",
+            introBtn: "Don't want to read about me? Click here — watch & hear it all in a video",
+            introBtnShort: "Watch my intro video",
+            introTitle: "About me — in video",
+            introSub: "No need to read through the whole portfolio — press play and watch & hear everything about me.",
+            introNote: "The video plays right here on this page.",
+            introComing: "Video coming soon — not uploaded yet",
             cvBtn: "Download CV (PDF)", cvAllBtn: "Download complete CV (PDF)",
             cvAllNote: "One PDF with every profile on this page — photo included. Each profile also has its own CV download inside it.",
             cvBusy: "Preparing PDF…", cvSummary: "Professional Summary", cvLanguages: "Languages",
@@ -1590,6 +1708,13 @@
             ctaBtn: "Fiverr-এ যোগাযোগ করুন",
             ctaP1: "ইংরেজি · হিন্দি · বাংলায় উত্তর", ctaP2: "সময়মতো ডেলিভারি", ctaP3: "সৎ ও আগাম মূল্য",
             footLoc: "বাংলাদেশ", playVideo: "ভিডিও দেখুন",
+            followMe: "আমাকে ফলো করুন",
+            introBtn: "আমার সম্পর্কে পড়তে হবে না — এখানে ক্লিক করে ভিডিওতে সব দেখুন ও শুনুন",
+            introBtnShort: "আমার পরিচিতি ভিডিও দেখুন",
+            introTitle: "আমার সম্পর্কে — ভিডিওতে",
+            introSub: "পুরো পোর্টফোলিও পড়তে হবে না — প্লে চাপলেই ভিডিওতে আমার সম্পর্কে সব দেখতে ও শুনতে পারবেন।",
+            introNote: "ভিডিওটি এই পেজেই চলবে।",
+            introComing: "ভিডিও শীঘ্রই আসছে — এখনো আপলোড হয়নি",
             cvBtn: "CV ডাউনলোড করুন (PDF)", cvAllBtn: "সম্পূর্ণ CV ডাউনলোড করুন (PDF)",
             cvAllNote: "এই পেজের সব প্রোফাইল এক PDF-এ — ছবিসহ। প্রতিটি প্রোফাইলের ভেতরেও আলাদা CV ডাউনলোড আছে।",
             cvBusy: "PDF তৈরি হচ্ছে…", cvSummary: "পেশাগত সারসংক্ষেপ", cvLanguages: "ভাষা",
@@ -1690,6 +1815,21 @@
             fiverr: "",
             location: "Bangladesh"
           },
+          /* Social platform links, saved from Admin. A platform stays
+             hidden until its link is added there — nothing is invented.
+             Telegram also falls back to contact.telegram above.
+             Accepted Admin shapes: social / socials / socialLinks as an
+             object ({instagram, facebook, linkedin, telegram}) or as a
+             list of {platform, url} entries; values may be full URLs or
+             plain usernames / handles. */
+          social: { instagram: "", facebook: "", linkedin: "", telegram: "" },
+          /* "About me" intro video, uploaded from Admin. url may be a
+             direct video file (MP4 first choice; WebM, MOV and OGG also
+             play), an embedded data video, or a YouTube / Vimeo link.
+             Also read from hero.introVideo / hero.aboutVideo / aboutVideo
+             when saved there instead. Empty = the watch-video buttons
+             stay hidden and no player is shown. */
+          introVideo: { url: "", poster: "" },
           /* Fiverr-ready data: profile URL, username and gig links are read
              from here (or contact.fiverr). "connection" is the placeholder a
              future real Fiverr connection plugs into — nothing here fakes a
@@ -1919,7 +2059,38 @@
             return blankVal(v.en) && blankVal(v.bn);
           return false;
         }
+        /* Admin may save the social links as a list of {platform, url}
+           entries instead of an object — normalise that shape back to
+           an object so the merge below cannot mangle it. */
+        function normalizeSocialInput(raw){
+          if (!Array.isArray(raw)) return raw;
+          var o = {};
+          raw.forEach(function(it){
+            if (!it || typeof it !== "object") return;
+            var k = String(it.platform || it.name || it.key || it.type || "").toLowerCase();
+            var u = it.url || it.link || it.href || it.value || "";
+            if (k && u) o[k] = u;
+          });
+          return o;
+        }
         function adoptContent(remote){
+          /* The intro video may be saved as a plain string URL and the
+             social links as a list — normalise both before merging,
+             because merging an object default over a string / array
+             value would silently drop what Admin saved. */
+          if (remote && typeof remote === "object" && !Array.isArray(remote)){
+            var needsNorm =
+              typeof remote.introVideo === "string" || Array.isArray(remote.introVideo) ||
+              Array.isArray(remote.social) || Array.isArray(remote.socials) || Array.isArray(remote.socialLinks);
+            if (needsNorm){
+              remote = clone(remote);
+              if (typeof remote.introVideo === "string") remote.introVideo = { url: remote.introVideo };
+              else if (Array.isArray(remote.introVideo)) remote.introVideo = { url: String(remote.introVideo[0] || "") };
+              ["social", "socials", "socialLinks"].forEach(function(k){
+                if (Array.isArray(remote[k])) remote[k] = normalizeSocialInput(remote[k]);
+              });
+            }
+          }
           var merged = mergeDefaults(clone(DEFAULT_CONTENT), remote);
           var rp = remote && (remote.profiles || remote.sectors);
           if (rp) merged.profiles = denorm(rp);
@@ -2398,6 +2569,177 @@
           return num ? "https://wa.me/" + num : "";
         }
 
+        /* ================= social platforms (head bar, hub, contact popup) =================
+           Links come from the shared content Admin saves — content.social /
+           socials / socialLinks (object or {platform,url} list), matching
+           fields on contact, or hero.social. A value may be a full URL or a
+           plain username / handle, which is expanded to that platform's
+           address. A platform with nothing saved is not rendered at all:
+           no placeholder and no invented link. Telegram falls back to the
+           contact Telegram, which the page already maintains. */
+        var SOCIAL_ICONS = {
+          instagram: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>',
+          facebook: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>',
+          linkedin: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>',
+          telegram: IC_TG
+        };
+        var socialPresent = false;
+        function refreshSocialChrome(){
+          var hb = document.getElementById("headBar");
+          if (hb) hb.hidden = !socialPresent;
+          var hs = document.getElementById("hubSocial");
+          if (hs) hs.hidden = !socialPresent;
+        }
+        function socialHref(platform, raw){
+          var v = String(raw == null ? "" : raw).trim();
+          if (!v) return "";
+          if (/^https?:\/\//i.test(v)) return v;
+          if (/^(www\.)?(instagram\.com|facebook\.com|fb\.com|linkedin\.com|t\.me)\//i.test(v)) return "https://" + v;
+          var h = v.replace(/^@/, "").replace(/\/+$/, "");
+          if (!h) return "";
+          if (platform === "instagram") return "https://www.instagram.com/" + h + "/";
+          if (platform === "facebook") return "https://www.facebook.com/" + h;
+          if (platform === "linkedin"){
+            if (/^(in|company|pub)\//i.test(h)) return "https://www.linkedin.com/" + h;
+            return "https://www.linkedin.com/in/" + h;
+          }
+          if (platform === "telegram") return "https://t.me/" + h;
+          return "";
+        }
+        function socialData(){
+          var C = content.contact || {}, H = content.hero || {};
+          var merged = {};
+          [content.social, content.socials, content.socialLinks, content.links, C.social, H.social].forEach(function(src){
+            if (src && typeof src === "object" && !Array.isArray(src)){
+              Object.keys(src).forEach(function(k){
+                var v = src[k], lk = k.toLowerCase();
+                if (typeof v === "string" && v.trim()) merged[lk] = v;
+                else if (v && typeof v === "object" && (v.url || v.link || v.href)) merged[lk] = v.url || v.link || v.href;
+              });
+            }
+          });
+          function rawFor(keys, contactKeys){
+            for (var i = 0; i < keys.length; i++){ if (merged[keys[i]]) return merged[keys[i]]; }
+            for (var j = 0; j < contactKeys.length; j++){
+              var cv = C[contactKeys[j]];
+              if (typeof cv === "string" && cv.trim()) return cv;
+            }
+            return "";
+          }
+          var tg = telegramInfo(C);
+          var defs = [
+            { key: "instagram", label: "Instagram", href: socialHref("instagram", rawFor(["instagram", "instagramurl", "instagramlink"], ["instagram", "instagramUrl", "instagramLink"])) },
+            { key: "facebook", label: "Facebook", href: socialHref("facebook", rawFor(["facebook", "facebookurl", "facebooklink", "fb"], ["facebook", "facebookUrl", "facebookLink"])) },
+            { key: "linkedin", label: "LinkedIn", href: socialHref("linkedin", rawFor(["linkedin", "linkedinurl", "linkedinlink"], ["linkedin", "linkedinUrl", "linkedinLink"])) },
+            { key: "telegram", label: "Telegram", href: socialHref("telegram", rawFor(["telegram", "telegramurl", "telegramlink"], [])) || tg.href }
+          ];
+          return defs.filter(function(d){ return !!d.href; });
+        }
+        function renderSocials(){
+          var list = socialData();
+          socialPresent = list.length > 0;
+          var html = list.map(function(s){
+            return '<a class="soc soc-' + s.key + '" href="' + esc(s.href) + '" target="_blank" rel="noopener" aria-label="' + esc(s.label) + '">' + SOCIAL_ICONS[s.key] + '<span>' + esc(s.label) + '</span></a>';
+          }).join("");
+          document.querySelectorAll("[data-social-slot]").forEach(function(slot){ slot.innerHTML = html; });
+          refreshSocialChrome();
+        }
+
+        /* ================= intro video ("about me" video) =================
+           The video is read defensively from wherever Admin saves it:
+           content.introVideo / aboutVideo / intro.video, or hero.introVideo /
+           hero.aboutVideo / hero.video — as a plain URL string or an object
+           ({url, poster, title}). Direct files play in-page: MP4 first, and
+           WebM, MOV, OGG and M4V as the extra modes; YouTube / Vimeo links
+           embed; anything else opens as a watch link. With no video saved,
+           the button under the live clock stays visible but disabled,
+           labelled "video coming soon". */
+        var introModalOpen = false;
+        function introVideoData(){
+          var H = content.hero || {};
+          var cands = [
+            content.introVideo, content.aboutVideo,
+            (content.intro && typeof content.intro === "object") ? content.intro.video : null,
+            H.introVideo, H.aboutVideo, H.video
+          ];
+          for (var i = 0; i < cands.length; i++){
+            var c = cands[i];
+            if (c == null || c === "") continue;
+            if (typeof c === "string" && c.trim()) return { url: c.trim(), poster: "", title: "" };
+            if (typeof c === "object"){
+              var url = c.url || c.src || c.video || c.videoUrl || c.link || c.href || c.file || c.mp4 || "";
+              if (typeof url === "string" && url.trim()){
+                return { url: url.trim(), poster: String(c.poster || c.image || c.thumbnail || c.cover || ""), title: F(c, "title") };
+              }
+            }
+          }
+          return null;
+        }
+        var INTRO_VIDEO_TYPES = { mp4: "video/mp4", webm: "video/webm", mov: "video/quicktime", ogg: "video/ogg", m4v: "video/x-m4v" };
+        function introPlayerHtml(iv){
+          var emb = embedUrl(iv.url);
+          if (emb) return '<iframe src="' + esc(emb) + '" title="' + esc(iv.title || t("introTitle")) + '" loading="lazy" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>';
+          var m = String(iv.url).match(/\.([a-z0-9]+)(?:[?#]|$)/i);
+          var ext = m ? m[1].toLowerCase() : "";
+          if (INTRO_VIDEO_TYPES[ext] || /^data:video\//i.test(iv.url) || /^blob:/i.test(iv.url)){
+            var poster = iv.poster ? ' poster="' + esc(iv.poster) + '"' : "";
+            var typeAttr = INTRO_VIDEO_TYPES[ext] ? ' type="' + INTRO_VIDEO_TYPES[ext] + '"' : "";
+            return '<video controls playsinline preload="metadata"' + poster + '><source src="' + esc(iv.url) + '"' + typeAttr + '></video>';
+          }
+          return '<a class="intro-link-card" href="' + esc(iv.url) + '" target="_blank" rel="noopener"><span class="play-circ"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg></span><span>' + esc(t("playVideo")) + '</span></a>';
+        }
+        function renderIntroVideo(){
+          var iv = introVideoData();
+          /* The button always stays visible directly under the live
+             clock: with a video saved it is active and opens the player;
+             without one it shows an honest disabled "coming soon" state
+             instead of opening an empty player. */
+          document.querySelectorAll("[data-intro]").forEach(function(b){
+            b.hidden = false;
+            b.disabled = !iv;
+            b.classList.toggle("is-off", !iv);
+            b.setAttribute("aria-disabled", iv ? "false" : "true");
+            var st = b.querySelector(".intro-state");
+            if (st) st.hidden = !!iv;
+          });
+          var title = document.getElementById("introTitle");
+          if (title) title.textContent = (iv && iv.title) ? iv.title : t("introTitle");
+          var player = document.getElementById("introPlayer");
+          if (player && !introModalOpen) player.innerHTML = iv ? introPlayerHtml(iv) : "";
+        }
+        function openIntro(){
+          var iv = introVideoData();
+          var modal = document.getElementById("introModal");
+          if (!iv || !modal) return;
+          var player = document.getElementById("introPlayer");
+          if (player) player.innerHTML = introPlayerHtml(iv);
+          introModalOpen = true;
+          modal.removeAttribute("hidden");
+          modal.classList.add("open");
+          document.body.style.overflow = "hidden";
+          var v = player ? player.querySelector("video") : null;
+          if (v && v.play){ var p = v.play(); if (p && p.catch) p.catch(function(){}); }
+        }
+        function closeIntro(){
+          var modal = document.getElementById("introModal");
+          if (!modal) return;
+          introModalOpen = false;
+          modal.classList.remove("open");
+          var player = document.getElementById("introPlayer");
+          if (player) player.innerHTML = "";
+          document.body.style.overflow = "";
+        }
+        document.addEventListener("click", function(ev){
+          if (!ev.target.closest) return;
+          if (ev.target.closest("[data-intro]")){ openIntro(); return; }
+          if (ev.target.closest("[data-intro-close]")){ closeIntro(); return; }
+          var im = document.getElementById("introModal");
+          if (im && ev.target === im) closeIntro();
+        });
+        document.addEventListener("keydown", function(ev){
+          if (ev.key === "Escape" && introModalOpen) closeIntro();
+        });
+
         /* ================= Fiverr (links from data + connection placeholder) ================= */
         function fiverrData(){
           var fv = (content.fiverr && typeof content.fiverr === "object") ? content.fiverr : {};
@@ -2602,6 +2944,8 @@
           renderStatus();
           applyProfilePhoto();
           renderFiverr();
+          renderSocials();
+          renderIntroVideo();
         }
 
         /* ================= CV downloads (PDF) =================

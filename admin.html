@@ -378,6 +378,55 @@
       <div class="upload-status" id="contactStatus"></div>
     </section>
 
+    <!-- Social links (header icons on the main site) -->
+    <section class="card">
+      <h2>Social links — header icons / সোশ্যাল লিংক — হেডারের আইকন</h2>
+      <p class="hint">These platforms appear as icons in the header (top) of the main portfolio. Paste your full profile link for each platform (just the username also works for Instagram, Facebook, LinkedIn and Telegram) — when a visitor taps an icon, it takes them straight to that profile page. A platform you leave empty shows no icon. Links publish to Firebase by themselves as soon as you finish editing a field, and the Test link under each field shows exactly where a visitor's tap will go.</p>
+      <div class="grid2">
+        <div class="field"><label>Instagram</label><input type="text" data-bind="social.instagram" placeholder="https://www.instagram.com/username" />
+          <div class="sub-hint">Full link or just the username.</div>
+          <a class="test-link hidden" id="test-social-instagram" href="#" target="_blank" rel="noopener"></a></div>
+        <div class="field"><label>Facebook</label><input type="text" data-bind="social.facebook" placeholder="https://www.facebook.com/username" />
+          <div class="sub-hint">Full link or just the username / page name.</div>
+          <a class="test-link hidden" id="test-social-facebook" href="#" target="_blank" rel="noopener"></a></div>
+        <div class="field"><label>LinkedIn</label><input type="text" data-bind="social.linkedin" placeholder="https://www.linkedin.com/in/username" />
+          <div class="sub-hint">Full link or just the name after /in/.</div>
+          <a class="test-link hidden" id="test-social-linkedin" href="#" target="_blank" rel="noopener"></a></div>
+        <div class="field"><label>Telegram</label><input type="text" data-bind="social.telegram" placeholder="https://t.me/username" />
+          <div class="sub-hint">Full t.me link or just the @username — visitor taps open Telegram.</div>
+          <a class="test-link hidden" id="test-social-telegram" href="#" target="_blank" rel="noopener"></a></div>
+      </div>
+      <div class="upload-status" id="socialStatus"></div>
+    </section>
+
+    <!-- About-me intro video -->
+    <section class="card">
+      <h2>About me — intro video / আমার সম্পর্কে — পরিচিতি ভিডিও</h2>
+      <p class="hint">One short video where you introduce yourself, so a visitor does not have to read the whole portfolio: on the main site a clear button with the label below sits near the top, and tapping it opens this video right in front of them to watch and listen. Upload the video file (MP4 is best — WebM, MOV and M4V also work) or paste a YouTube / Vimeo / direct video link. The date &amp; time under the upload is saved with the video, so you can always see when the current video was added.</p>
+      <div class="pair">
+        <div class="field"><label class="tag-en">Button label visitors tap</label><input type="text" data-bind="introVideo.button.en" /></div>
+        <div class="field"><label class="tag-bn">বাটনের লেখা</label><input type="text" data-bind="introVideo.button.bn" /></div>
+      </div>
+      <div class="lang-warn hidden" data-warn="introVideo.button">One language is empty — fill both so the main site never shows a blank. / একটা ভাষা খালি আছে, দুটোই পূরণ করুন।</div>
+      <div class="grid2" style="margin-top:12px">
+        <div class="field"><label>Video link (YouTube / Vimeo / .mp4)</label><input type="text" data-bind="introVideo.video" placeholder="https://www.youtube.com/watch?v=… or https://…/intro.mp4" />
+          <div class="sub-hint">Pasting a link here works without any upload — the video publishes by itself when you finish the field.</div></div>
+        <div class="field"><label>Poster photo — image URL (optional)</label><input type="url" data-bind="introVideo.poster" placeholder="https://…" />
+          <div class="sub-hint">Shown as the video's cover picture before it plays.</div></div>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label>Video — upload a file / ভিডিও ফাইল আপলোড করুন</label>
+        <input type="file" accept="video/mp4,video/webm,video/quicktime,video/x-m4v,.mp4,.webm,.mov,.m4v" data-intro-upload="introVideo" />
+        <div class="sub-hint">Formats: MP4 (best), WebM, MOV, M4V. The file goes to Firebase Storage (portfolio/intro/) and publishes to the main site as soon as the upload finishes. Video files are too large to embed in the database: if Storage is unavailable, paste a YouTube, Vimeo or direct video link above instead.</div>
+        <div class="upload-status" id="introStatus"></div>
+      </div>
+      <p class="status-now" id="introUpdated">No intro video added yet. / এখনো কোনো পরিচিতি ভিডিও যোগ হয়নি।</p>
+      <div id="introPreview"></div>
+      <div style="margin-top:12px">
+        <button class="btn small danger" id="btnClearIntroVideo" type="button">Remove intro video / ভিডিওটি সরান</button>
+      </div>
+    </section>
+
     <!-- Banners -->
     <section class="card">
       <h2 data-i18n="bannerH">Headline / banner items</h2>
@@ -543,6 +592,12 @@ function defaultContent(){
     contact: {
       phone: "", phoneHref: "", whatsapp: "", email: "", telegram: "", telegramHref: "", fiverr: "",
       location: L("Bangladesh", "বাংলাদেশ")
+    },
+    social: { instagram: "", facebook: "", linkedin: "", telegram: "" },
+    introVideo: {
+      video: "", poster: "", updatedAt: "",
+      button: L("Don't want to read about me? Tap here — watch & hear everything in my intro video",
+                "আমার সম্পর্কে পড়তে হবে না — এখানে ক্লিক করে ভিডিওতে সব দেখুন ও শুনুন")
     },
     status: {
       mode: "available",
@@ -956,6 +1011,7 @@ function startApp(cfg){
     var val = snap.val();
     if (val) content = merge(defaultContent(), val);
     else content = defaultContent();
+    seedIntroDefaults();
     renderAll();
     markClean(val ? "Loaded latest content from Firebase."
                   : "Database is empty — showing starter content. Press Save to publish it.");
@@ -987,6 +1043,7 @@ function reloadFromFirebase(){
   db.ref(NODE).once("value").then(function(snap){
     var val = snap.val();
     content = val ? merge(defaultContent(), val) : defaultContent();
+    seedIntroDefaults();
     renderAll(); markClean("Reloaded from Firebase — local edits discarded.");
     toast("Reloaded from Firebase.");
   }).catch(function(err){ toast("Reload failed: " + (err && err.message ? err.message : err)); });
@@ -1037,6 +1094,7 @@ $("btnSave").addEventListener("click", function(){
   /* Rebuild the phone/Telegram tap targets from the typed values so a
      full Save can never ship new labels with old links. */
   syncContactDerived();
+  syncSocialLinks();
   var btn = $("btnSave"); btn.disabled = true; btn.textContent = "Saving…";
   db.ref(NODE).set(content).then(function(){
     /* Verify the write actually landed — a save that Firebase accepted
@@ -1290,7 +1348,7 @@ function renderAll(){
     if (typeof v === "string" && el.value !== v) el.value = v;
   });
   renderStats(); renderBanners(); renderTabs(); renderProfile(); renderGigs();
-  refreshLangWarnings(); updateContactTests(); updateStatusNow(); updateProfilePhotoPreview(); renderCvDownloads();
+  refreshLangWarnings(); updateContactTests(); renderSocialTests(); renderIntro(); updateStatusNow(); updateProfilePhotoPreview(); renderCvDownloads();
 }
 
 /* ================= Profile photo preview ================= */
@@ -1406,6 +1464,203 @@ function persistContact(){
            String(v.telegramHref || "") === String(snapshot.telegramHref || "");
   }).catch(function(){ return false; });
 }
+/* ================= Social links: header icons on the main site =================
+   Instagram / Facebook / LinkedIn / Telegram live in their own `social`
+   node inside portfolio/content. The main site's header shows one icon
+   per non-empty link and each icon takes the visitor straight to that
+   profile page. A bare username is expanded to the platform's URL, and
+   the block publishes itself (with read-back check) as soon as a field
+   is finished — the same pattern as Contact and the profile photo. */
+function socialHref(kind, v){
+  v = String(v || "").trim(); if (!v) return "";
+  if (/^https?:\/\//i.test(v)) return v;
+  if (/^www\./i.test(v)) return "https://" + v;
+  if (kind === "telegram") return "https://t.me/" + v.replace(/^@+/, "").replace(/^t\.me\//i, "");
+  var u = v.replace(/^@+/, "").replace(/\/$/, "");
+  if (!u || /\s/.test(u)) return "";
+  if (u.indexOf(".") >= 0) return "https://" + u; /* e.g. instagram.com/name typed without scheme */
+  if (kind === "instagram") return "https://www.instagram.com/" + u;
+  if (kind === "facebook") return "https://www.facebook.com/" + u;
+  if (kind === "linkedin") return "https://www.linkedin.com/in/" + u;
+  return "";
+}
+function syncSocialLinks(){
+  var S = content.social; if (!S) return;
+  ["instagram", "facebook", "linkedin", "telegram"].forEach(function(k){
+    var h = socialHref(k, S[k]);
+    if (h) S[k] = h;
+  });
+}
+function renderSocialTests(){
+  ["instagram", "facebook", "linkedin", "telegram"].forEach(function(k){
+    var a = $("test-social-" + k); if (!a) return;
+    var href = socialHref(k, getPath(content, "social." + k));
+    if (!href && k === "telegram") href = contactHref("telegram", getPath(content, "contact.telegram"));
+    if (href){ a.href = href; a.textContent = "Test link ↗ " + href; a.classList.remove("hidden"); }
+    else { a.classList.add("hidden"); a.removeAttribute("href"); }
+  });
+}
+function persistSocial(){
+  if (!db || !content.social) return Promise.resolve(false);
+  syncSocialLinks();
+  var snapshot = JSON.parse(JSON.stringify(content.social));
+  return db.ref(NODE + "/social").set(snapshot).then(function(){
+    return db.ref(NODE + "/social").once("value");
+  }).then(function(snap){
+    var v = snap.val() || {};
+    return ["instagram", "facebook", "linkedin", "telegram"].every(function(k){
+      return String(v[k] || "") === String(snapshot[k] || "");
+    });
+  }).catch(function(){ return false; });
+}
+
+/* ================= About-me intro video =================
+   One self-introduction video in its own `introVideo` node: the main
+   site shows a button with introVideo.button (EN/BN) and tapping it
+   opens introVideo.video in front of the visitor. updatedAt records
+   the local date & time the current video was added and is shown
+   under the upload controls. File uploads go to Firebase Storage
+   (portfolio/intro/) — videos are too large to embed in the database,
+   so with no Storage the link field is the way in. Publishing is
+   immediate, like the profile photo. */
+function persistIntroVideo(){
+  if (!db || !content.introVideo) return Promise.resolve(false);
+  var snapshot = JSON.parse(JSON.stringify(content.introVideo));
+  return db.ref(NODE + "/introVideo").set(snapshot).then(function(){
+    return db.ref(NODE + "/introVideo").once("value");
+  }).then(function(snap){
+    var v = snap.val() || {};
+    return String(v.video || "") === String(snapshot.video || "");
+  }).catch(function(){ return false; });
+}
+function fmtIntroWhen(iso){
+  if (!iso) return "";
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return String(iso);
+  return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" }) +
+    " · " + d.toLocaleTimeString("en-GB");
+}
+function introPreviewHtml(){
+  var url = String(getPath(content, "introVideo.video") || "").trim();
+  if (!url) return '<div class="thumb-empty">No intro video yet — upload the file above or paste a video link.</div>';
+  var embed = videoEmbedUrl(url);
+  if (embed) return '<iframe class="video-preview" src="' + esc(embed) + '" title="Intro video preview" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>';
+  if (isDirectVideoUrl(url)){
+    var poster = String(getPath(content, "introVideo.poster") || "").trim();
+    return '<video class="video-preview" src="' + esc(url) + '"' + (poster ? ' poster="' + esc(poster) + '"' : '') + ' controls preload="metadata" playsinline></video>';
+  }
+  return '<div class="video-link-card">This video will open as a link on the main portfolio. <a href="' + esc(url) + '" target="_blank" rel="noopener">Check the video link ↗</a></div>';
+}
+function seedIntroDefaults(){
+  var b = content.introVideo && content.introVideo.button;
+  if (b && !String(b.en || "").trim() && !String(b.bn || "").trim()){
+    content.introVideo.button = L("Don't want to read about me? Tap here — watch & hear everything in my intro video",
+      "আমার সম্পর্কে পড়তে হবে না — এখানে ক্লিক করে ভিডিওতে সব দেখুন ও শুনুন");
+  }
+}
+function renderIntro(){
+  var pv = $("introPreview"); if (pv) pv.innerHTML = introPreviewHtml();
+  var up = $("introUpdated"); if (!up) return;
+  var url = String(getPath(content, "introVideo.video") || "").trim();
+  var when = fmtIntroWhen(getPath(content, "introVideo.updatedAt"));
+  up.textContent = url
+    ? "Current intro video added: " + (when || "date not recorded") + " / বর্তমান ভিডিওটি যোগ হয়েছে: " + (when || "—")
+    : "No intro video added yet. / এখনো কোনো পরিচিতি ভিডিও যোগ হয়নি।";
+}
+function touchIntroUpdated(){
+  if (!content.introVideo) return;
+  content.introVideo.updatedAt = String(getPath(content, "introVideo.video") || "").trim()
+    ? new Date().toISOString() : "";
+}
+$("btnClearIntroVideo").addEventListener("click", function(){
+  if (!String(getPath(content, "introVideo.video") || "").trim()){
+    toast("No intro video to remove.");
+    return;
+  }
+  setPath(content, "introVideo.video", "");
+  setPath(content, "introVideo.updatedAt", "");
+  markDirty(); renderAll();
+  var st = $("introStatus");
+  if (st){ st.className = "upload-status"; st.textContent = "Removing the intro video from Firebase…"; }
+  persistIntroVideo().then(function(saved){
+    var st2 = $("introStatus"); if (!st2) return;
+    if (saved){
+      st2.className = "upload-status ok";
+      st2.textContent = "Intro video removed in Firebase ✓ The button no longer shows on the main site. / ভিডিও সরানো হয়েছে ✓";
+      toast("Intro video removed ✓");
+    } else {
+      st2.className = "upload-status warn";
+      st2.textContent = "Removed in the editor but not published by itself (not connected?) — press Save to publish the removal.";
+    }
+  });
+});
+function handleIntroUpload(input){
+  var file = input.files && input.files[0]; if (!file) return;
+  var statusEl = $("introStatus");
+  function say(cls, msg){ if (statusEl){ statusEl.className = "upload-status " + cls; statusEl.textContent = msg; } }
+  var nameLooksVideo = /\.(mp4|webm|mov|m4v|ogg)$/i.test(file.name || "");
+  if (file.type && file.type.indexOf("video/") !== 0 && !nameLooksVideo){
+    say("err", "That file is not a video. Choose an MP4, WebM, MOV or M4V file, or paste a video link instead.");
+    input.value = ""; return;
+  }
+  if (!storage){
+    say("err", "Firebase Storage is not connected, so this video file cannot be uploaded. Paste a YouTube, Vimeo or direct video link in the Video link field instead.");
+    input.value = ""; return;
+  }
+  var settleUpload = null;
+  var trackedUpload = new Promise(function(res){ settleUpload = res; });
+  videoUploadPromises.push(trackedUpload);
+  function settle(){
+    var ix = videoUploadPromises.indexOf(trackedUpload);
+    if (ix >= 0) videoUploadPromises.splice(ix, 1);
+    if (settleUpload){ settleUpload(); settleUpload = null; }
+  }
+  function finish(url){
+    setPath(content, "introVideo.video", url);
+    setPath(content, "introVideo.updatedAt", new Date().toISOString());
+    markDirty(); renderAll();
+    var st = $("introStatus");
+    if (st){ st.className = "upload-status"; st.textContent = "Video uploaded — publishing it to Firebase…"; }
+    persistIntroVideo().then(function(saved){
+      var st2 = $("introStatus"); if (!st2) return;
+      if (saved){
+        st2.className = "upload-status ok";
+        st2.textContent = "Intro video published ✓ The button on the main site now opens this video. / ভিডিও পাবলিশ হয়েছে ✓";
+        toast("Intro video published ✓ Main site button now opens it.");
+      } else {
+        st2.className = "upload-status warn";
+        st2.textContent = "Video uploaded to Storage but not published by itself (not connected?) — press Save at the bottom to publish it.";
+      }
+      settle();
+    });
+  }
+  function fail(err){
+    say("err", "Intro video upload failed" + (err && err.message ? ": " + err.message : "") +
+      " — the file was not saved in the database because videos are too large to embed. Enable Firebase Storage and try again, or paste a YouTube / Vimeo / direct video link instead.");
+    toast("Intro video upload failed — use a video link, or check Firebase Storage.");
+    input.value = ""; settle();
+  }
+  say("", "Uploading intro video to Firebase Storage…");
+  var safeName = Date.now() + "-" + file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  var ref = storage.ref("portfolio/intro/" + safeName);
+  try {
+    var task = ref.put(file, { contentType: file.type || "video/mp4" });
+    if (task && typeof task.on === "function"){
+      task.on("state_changed", function(snap){
+        if (snap && snap.totalBytes){
+          say("", "Uploading intro video to Firebase Storage… " + Math.round(snap.bytesTransferred * 100 / snap.totalBytes) + "% — wait for it to finish before saving.");
+        }
+      }, fail, function(){
+        ref.getDownloadURL().then(finish).catch(fail);
+      });
+    } else if (task && typeof task.then === "function"){
+      task.then(function(){ return ref.getDownloadURL(); }).then(finish).catch(fail);
+    } else {
+      fail(new Error("the upload did not start"));
+    }
+  } catch(e){ fail(e); }
+}
+
 function updateStatusNow(){
   var el = $("statusNow"); if (!el) return;
   var mode = getPath(content, "status.mode") || "available";
@@ -1451,6 +1706,8 @@ editor.addEventListener("input", function(e){
       if (vwrap) vwrap.innerHTML = sampleVideoPreview({ kind: "video", video: t.value });
     }
     if (bp.indexOf("contact.") === 0){ syncContactDerived(); updateContactTests(); }
+    if (bp.indexOf("social.") === 0) renderSocialTests();
+    if (bp === "introVideo.video" || bp === "introVideo.poster") renderIntro();
     if (bp.indexOf("status.") === 0) updateStatusNow();
     if (/\.color$/.test(bp)){
       var sw = editor.querySelector('[data-colorfor="' + bp.slice(0, -6) + '"]');
@@ -1509,6 +1766,42 @@ editor.addEventListener("change", function(e){
         }
       });
     }
+    if (t.getAttribute("data-bind").indexOf("social.") === 0){
+      /* Social links publish themselves too — a typed Instagram or
+         Facebook link should reach the main site's header icons
+         without hunting for the big Save button. */
+      renderSocialTests();
+      var sst = $("socialStatus");
+      if (sst){ sst.className = "upload-status"; sst.textContent = "Saving social links to Firebase… / সোশ্যাল লিংক সেভ হচ্ছে…"; }
+      persistSocial().then(function(saved){
+        var sst2 = $("socialStatus"); if (!sst2) return;
+        renderAll();
+        var sst3 = $("socialStatus"); if (!sst3) return;
+        if (saved){
+          sst3.className = "upload-status ok";
+          sst3.textContent = "Social links saved to Firebase ✓ The main site's header icons now point at these profiles. / সোশ্যাল লিংক সেভ হয়েছে ✓";
+        } else {
+          sst3.className = "upload-status warn";
+          sst3.textContent = "Social links edited here but not published by themselves (not connected?) — press Save at the bottom to publish them with everything else.";
+        }
+      });
+    }
+    if (t.getAttribute("data-bind") === "introVideo.video" || t.getAttribute("data-bind") === "introVideo.poster"){
+      touchIntroUpdated(); renderIntro();
+      var ist = $("introStatus");
+      if (ist){ ist.className = "upload-status"; ist.textContent = "Saving the intro video to Firebase… / ভিডিও সেভ হচ্ছে…"; }
+      persistIntroVideo().then(function(saved){
+        var ist2 = $("introStatus"); if (!ist2) return;
+        if (saved){
+          ist2.className = "upload-status ok";
+          ist2.textContent = "Intro video saved to Firebase ✓ The button on the main site now opens this video. / ভিডিও সেভ হয়েছে ✓";
+          toast("Intro video updated ✓");
+        } else {
+          ist2.className = "upload-status warn";
+          ist2.textContent = "Intro video edited here but not published by itself (not connected?) — press Save at the bottom to publish it with everything else.";
+        }
+      });
+    }
   }
   if (t.hasAttribute("data-bind-check")){ setPath(content, t.getAttribute("data-bind-check"), t.checked); markDirty(); }
   if (t.hasAttribute("data-colorfor")){
@@ -1520,6 +1813,7 @@ editor.addEventListener("change", function(e){
   if (t.hasAttribute("data-upload")) handleUpload(t);
   if (t.hasAttribute("data-video-upload")) handleVideoUpload(t);
   if (t.hasAttribute("data-profile-upload")) handleProfileUpload(t);
+  if (t.hasAttribute("data-intro-upload")) handleIntroUpload(t);
 });
 var BLANKS = {
   "hero.stats": function(){ return { value: "", label: L("","") }; },
