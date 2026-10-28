@@ -115,6 +115,11 @@
   .switch-row input{width:19px;height:19px;accent-color:var(--accent)}
   .thumb{margin-top:8px;border:1px solid var(--line);border-radius:8px;max-width:220px;
     width:100%;display:block;background:var(--surface2)}
+  .video-preview{margin-top:10px;width:100%;aspect-ratio:16/9;border:1px solid var(--line);
+    border-radius:8px;background:#0a0f0a;display:block}
+  .video-link-card{margin-top:10px;border:1px solid var(--line);border-radius:8px;
+    background:var(--surface2);padding:12px;font-size:14px}
+  .sample-actions{display:flex;gap:8px;flex-wrap:wrap}
   .profile-photo-row{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
   .profile-preview{width:150px;flex:none}
   .profile-preview img{width:150px;height:190px;object-fit:cover;object-position:center 15%;
@@ -514,6 +519,7 @@ var NODE = "portfolio/content";
 /* ================= Default content (used only when the database node is empty) ================= */
 function L(en, bn){ return { en: en || "", bn: bn || "" }; }
 function blankSample(){ return { title: L("",""), desc: L("",""), kind: "photo", image: "", video: "" }; }
+function blankVideoSample(){ return { title: L("",""), desc: L("",""), kind: "video", image: "", video: "" }; }
 function blankProfile(titleEn, titleBn){
   return { title: L(titleEn, titleBn), tagline: L("",""), color: "#0d7a4c", icon: "support",
     experience: [], education: [], skills: [], languages: [], samples: [] };
@@ -680,6 +686,7 @@ var content = defaultContent();
 var dirty = false;
 var currentProfile = "support";
 var db = null, storage = null, connected = false;
+var videoUploadPromises = [];
 
 /* ================= Tiny helpers ================= */
 function $(id){ return document.getElementById(id); }
@@ -989,6 +996,18 @@ $("btnReload2").addEventListener("click", reloadFromFirebase);
 
 /* ================= Save ================= */
 $("btnSave").addEventListener("click", function(){
+  /* A video file reaches content only when its Storage upload finishes,
+     so Save waits for any video upload already in progress instead of
+     publishing the sample without the new video. */
+  if (videoUploadPromises.length){
+    var vwm = $("saveMsg"); vwm.className = "msg";
+    vwm.textContent = "Waiting for the video upload to finish, then saving… / ভিডিও আপলোড শেষ হওয়ার অপেক্ষা করছি, তারপর সেভ হবে…";
+    var pendingVideos = videoUploadPromises.slice();
+    Promise.all(pendingVideos.map(function(p){ return p.catch(function(){ return null; }); })).then(function(){
+      $("btnSave").click();
+    });
+    return;
+  }
   /* Never let a Save race a profile photo that is still uploading: the
      photo reaches content.hero.photo only when its upload finishes, so a
      Save pressed mid-upload would write the old (empty) photo value.
@@ -1125,6 +1144,27 @@ function iconOptions(sel){
     return '<option value="' + o[0] + '"' + (sel === o[0] ? " selected" : "") + '>' + o[1] + '</option>';
   }).join("");
 }
+function videoEmbedUrl(u){
+  u = String(u || "").trim(); if (!u) return "";
+  var m = u.match(/(?:youtube\.com\/(?:watch\?[^#]*v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{6,})/);
+  if (m) return "https://www.youtube.com/embed/" + m[1];
+  m = u.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (m) return "https://player.vimeo.com/video/" + m[1];
+  if (/youtube\.com\/embed\//.test(u) || /player\.vimeo\.com\//.test(u)) return u;
+  return "";
+}
+function isDirectVideoUrl(u){
+  return /^data:video\//i.test(u) || /\.(mp4|webm|mov|m4v|ogg)(\?|#|$)/i.test(u);
+}
+function sampleVideoPreview(x){
+  var url = String(x.video || "").trim();
+  if (x.kind !== "video") return "";
+  if (!url) return '<div class="thumb-empty">No video added yet — paste a video link or upload a video file below.</div>';
+  var embed = videoEmbedUrl(url);
+  if (embed) return '<iframe class="video-preview" src="' + esc(embed) + '" title="Video sample preview" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>';
+  if (isDirectVideoUrl(url)) return '<video class="video-preview" src="' + esc(url) + '" controls preload="metadata" playsinline></video>';
+  return '<div class="video-link-card">This video will open as a link on the main portfolio. <a href="' + esc(url) + '" target="_blank" rel="noopener">Check the video link ↗</a></div>';
+}
 function renderProfile(){
   var key = currentProfile, base = "profiles." + key, p = getPath(content, base);
   if (!p){
@@ -1190,12 +1230,15 @@ function renderProfile(){
 
   /* Samples */
   html += '<h3 class="subhead">Work Samples / কাজের নমুনা</h3>' +
-    '<p class="hint">Photo samples: paste an image link or upload a photo. Video samples: paste a YouTube / Vimeo / video link — it shows as an embed on the main site.</p><div class="items">';
+    '<p class="hint">Add another video to this sector with <strong>+ Add video</strong>: paste a YouTube / Vimeo / direct video link, or upload an MP4, WebM or MOV file. After Save, it appears in this sector\'s Samples on the main portfolio. Photo samples can use an image link or a photo upload.</p><div class="items">';
   html += (p.samples || []).map(function(x, i){
     var b = base + ".samples." + i;
     var img = x.image
       ? '<img class="thumb" src="' + esc(x.image) + '" alt="" onerror="this.outerHTML=\'<div class=&quot;thumb-empty&quot;>Image failed to load — check the link.</div>\'" />'
       : '<div class="thumb-empty">No photo yet for this sample.</div>';
+    var media = x.kind === "video"
+      ? '<div id="vprev-' + b.replace(/\./g, "-") + '">' + sampleVideoPreview(x) + '</div>'
+      : img;
     return '<div class="item">' + itemHead(b, i) +
       pairFields(b + ".title", "Sample title", "নমুনার নাম") +
       '<div style="margin-top:10px">' + pairFields(b + ".desc", "Short description", "ছোট বিবরণ", true) + '</div>' +
@@ -1205,16 +1248,23 @@ function renderProfile(){
           '<option value="video"' + (x.kind === "video" ? " selected" : "") + '>Video</option>' +
         '</select></div>' +
       '<div class="grid2" style="margin-top:10px">' +
-        textField(b + ".image", "Photo — image URL", "https://…") +
-        '<div class="field"><label>Photo — upload a file</label>' +
+        textField(b + ".image", x.kind === "video" ? "Optional poster photo — image URL" : "Photo — image URL", "https://…") +
+        '<div class="field"><label>' + (x.kind === "video" ? "Optional poster photo — upload a file" : "Photo — upload a file") + '</label>' +
           '<input type="file" accept="image/*" data-upload="' + b + '" />' +
-          '<div class="sub-hint">Uploads go to Firebase Storage. If Storage is not enabled, the photo is saved inside the database instead (keep it under ~700 KB).</div>' +
+          '<div class="sub-hint">For a video, this photo can be its poster/thumbnail. Photo uploads go to Firebase Storage, or are embedded in the database if Storage is unavailable (keep an embedded photo under ~700 KB).</div>' +
           '<div class="upload-status" id="up-' + b.replace(/\./g, "-") + '"></div></div>' +
-      '</div>' + img +
-      '<div style="margin-top:10px">' + textField(b + ".video", "Video link (YouTube / Vimeo / .mp4)", "https://www.youtube.com/watch?v=…") + '</div>' +
+      '</div>' + media +
+      '<div style="margin-top:14px;border-top:1px dashed var(--line);padding-top:12px">' +
+        textField(b + ".video", "Video link (YouTube / Vimeo / .mp4)", "https://www.youtube.com/watch?v=…") +
+        '<div class="field" style="margin-top:10px"><label>Video — upload a file / ভিডিও ফাইল আপলোড করুন</label>' +
+          '<input type="file" accept="video/mp4,video/webm,video/quicktime,video/*" data-video-upload="' + b + '" />' +
+          '<div class="sub-hint">The uploaded file goes to Firebase Storage (portfolio/videos/) and its link is filled in automatically. Video files are too large to embed in the database: if Storage is unavailable, paste a YouTube, Vimeo or direct video link above instead.</div>' +
+          '<div class="upload-status" id="vid-' + b.replace(/\./g, "-") + '"></div></div>' +
+      '</div>' +
     '</div>';
   }).join("");
-  html += '</div><div class="add-row"><button class="btn small" type="button" data-add="' + base + '.samples">+ Add sample</button></div>';
+  html += '</div><div class="add-row sample-actions"><button class="btn small" type="button" data-add="' + base + '.samples">+ Add sample</button>' +
+    '<button class="btn small primary" type="button" data-add-video="' + base + '.samples">+ Add video / নতুন ভিডিও যোগ করুন</button></div>';
 
   /* Delete this sector */
   html += '<div style="margin-top:28px;border-top:1px dashed var(--line);padding-top:16px">' +
@@ -1396,6 +1446,10 @@ editor.addEventListener("input", function(e){
     setPath(content, bp, t.value); markDirty();
     refreshLangWarnings();
     if (bp === "hero.photo") updateProfilePhotoPreview();
+    if (/\.samples\.\d+\.video$/.test(bp)){
+      var vwrap = $("vprev-" + bp.slice(0, -6).replace(/\./g, "-"));
+      if (vwrap) vwrap.innerHTML = sampleVideoPreview({ kind: "video", video: t.value });
+    }
     if (bp.indexOf("contact.") === 0){ syncContactDerived(); updateContactTests(); }
     if (bp.indexOf("status.") === 0) updateStatusNow();
     if (/\.color$/.test(bp)){
@@ -1414,6 +1468,7 @@ editor.addEventListener("change", function(e){
   if (t.hasAttribute("data-bind")){
     setPath(content, t.getAttribute("data-bind"), t.value); markDirty();
     refreshLangWarnings();
+    if (/\.samples\.\d+\.kind$/.test(t.getAttribute("data-bind"))){ renderProfile(); refreshLangWarnings(); }
     if (t.getAttribute("data-bind") === "hero.photo"){
       updateProfilePhotoPreview();
       /* A pasted photo link publishes itself, like an upload does —
@@ -1463,6 +1518,7 @@ editor.addEventListener("change", function(e){
     if (txt) txt.value = t.value;
   }
   if (t.hasAttribute("data-upload")) handleUpload(t);
+  if (t.hasAttribute("data-video-upload")) handleVideoUpload(t);
   if (t.hasAttribute("data-profile-upload")) handleProfileUpload(t);
 });
 var BLANKS = {
@@ -1486,6 +1542,16 @@ editor.addEventListener("click", function(e){
     pendingDeleteSector = delSec.getAttribute("data-del-sector");
     $("delSectorName").textContent = "“" + (sectorName(pendingDeleteSector) || pendingDeleteSector) + "”";
     $("delModal").classList.remove("hidden");
+    return;
+  }
+  var addVideo = e.target.closest("[data-add-video]");
+  if (addVideo){
+    var vlp = addVideo.getAttribute("data-add-video");
+    var varr = getPath(content, vlp); if (!Array.isArray(varr)){ setPath(content, vlp, []); varr = getPath(content, vlp); }
+    varr.push(blankVideoSample()); markDirty(); renderAll();
+    toast("New video sample added — give it a title, paste a video link or upload the video file, then Save.");
+    var newVideoField = editor.querySelector('[data-bind="' + vlp + '.' + (varr.length - 1) + '.video"]');
+    if (newVideoField){ newVideoField.scrollIntoView({ block: "center", behavior: "smooth" }); newVideoField.focus({ preventScroll: true }); }
     return;
   }
   var add = e.target.closest("[data-add]");
@@ -1584,6 +1650,75 @@ function handleUpload(input){
     say("warn", "Firebase Storage is not available — saving the photo inside the database instead…");
     useDataUrl();
   }
+}
+
+/* ================= Video sample upload: Firebase Storage =================
+   A video is stored as a real file, never embedded in the Realtime
+   Database: even a short clip would make the content node enormous and
+   slow every portfolio load. A successful upload writes its download
+   URL into the sample's existing `video` field and switches the sample
+   to kind "video" — exactly the shape the main portfolio already
+   renders as a YouTube/Vimeo embed or a native video player. */
+function handleVideoUpload(input){
+  var file = input.files && input.files[0]; if (!file) return;
+  var samplePath = input.getAttribute("data-video-upload");
+  var statusId = "vid-" + samplePath.replace(/\./g, "-");
+  var statusEl = $(statusId);
+  function say(cls, msg){ if (statusEl){ statusEl.className = "upload-status " + cls; statusEl.textContent = msg; } }
+  var nameLooksVideo = /\.(mp4|webm|mov|m4v|ogg)$/i.test(file.name || "");
+  if (file.type && file.type.indexOf("video/") !== 0 && !nameLooksVideo){
+    say("err", "That file is not a video. Choose an MP4, WebM or MOV file, or paste a video link instead.");
+    input.value = ""; return;
+  }
+  if (!storage){
+    say("err", "Firebase Storage is not connected, so this video file cannot be uploaded. Paste a YouTube, Vimeo or direct video link in the Video link field instead.");
+    input.value = ""; return;
+  }
+
+  var settleUpload = null;
+  var trackedUpload = new Promise(function(res){ settleUpload = res; });
+  videoUploadPromises.push(trackedUpload);
+  function settle(){
+    var ix = videoUploadPromises.indexOf(trackedUpload);
+    if (ix >= 0) videoUploadPromises.splice(ix, 1);
+    if (settleUpload){ settleUpload(); settleUpload = null; }
+  }
+  function finish(url){
+    setPath(content, samplePath + ".video", url);
+    setPath(content, samplePath + ".kind", "video");
+    markDirty(); renderAll();
+    var newStatus = $(statusId);
+    if (newStatus){ newStatus.className = "upload-status ok";
+      newStatus.textContent = "Video uploaded to Firebase Storage ✓ Its link is filled in above — press Save to publish it on the portfolio."; }
+    toast("Video uploaded ✓ Press Save to publish it on the portfolio.");
+    settle();
+  }
+  function fail(err){
+    say("err", "Video upload failed" + (err && err.message ? ": " + err.message : "") +
+      " — the file was not saved in the database because videos are too large to embed. Enable Firebase Storage and try again, or paste a YouTube / Vimeo / direct video link instead.");
+    toast("Video upload failed — use a video link, or check Firebase Storage.");
+    input.value = ""; settle();
+  }
+
+  say("", "Uploading video to Firebase Storage…");
+  var safeName = Date.now() + "-" + file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  var ref = storage.ref("portfolio/videos/" + safeName);
+  try {
+    var task = ref.put(file, { contentType: file.type || "video/mp4" });
+    if (task && typeof task.on === "function"){
+      task.on("state_changed", function(snap){
+        if (snap && snap.totalBytes){
+          say("", "Uploading video to Firebase Storage… " + Math.round(snap.bytesTransferred * 100 / snap.totalBytes) + "% — wait for it to finish before saving.");
+        }
+      }, fail, function(){
+        ref.getDownloadURL().then(finish).catch(fail);
+      });
+    } else if (task && typeof task.then === "function"){
+      task.then(function(){ return ref.getDownloadURL(); }).then(finish).catch(fail);
+    } else {
+      fail(new Error("the upload did not start"));
+    }
+  } catch(e){ fail(e); }
 }
 
 /* ================= Profile photo: upload publishes immediately =================
