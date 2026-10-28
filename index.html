@@ -403,6 +403,14 @@
               <div class="stat"><b>3</b><span>Languages — Bangla, English, Hindi</span></div>
               <div class="stat"><b>20+</b><span>Professional tools in daily use</span></div>
             </div>
+
+            <div class="cv-bar rise d4">
+              <button class="btn btn-cv" data-cv-all>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+                <span data-i18n="cvAllBtn">Download complete CV (PDF)</span>
+              </button>
+              <p class="cv-note" data-i18n="cvAllNote">One PDF with every profile on this page — photo included. Each profile also has its own CV download inside it.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -432,6 +440,12 @@
       .p-title-row h2{font-size:clamp(30px,4.6vw,44px);font-weight:800;letter-spacing:-.01em}
       .p-title-row p{color:var(--ink-soft);margin-top:7px;max-width:44em;font-size:16.5px}
       .p-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
+      .btn-cv{background:var(--ink);color:var(--bg);box-shadow:0 10px 24px -12px rgba(23,48,46,.55)}
+      .btn-cv:hover{transform:translateY(-2px)}
+      .btn-cv[disabled]{opacity:.65;cursor:wait;transform:none}
+      .btn-cv svg{flex:none}
+      .cv-bar{margin-top:30px;display:flex;flex-direction:column;align-items:center;gap:9px}
+      .cv-note{font-size:13.5px;color:var(--ink-faint);font-weight:600;text-align:center}
       .p-sec{padding:46px 0}
       .p-sec-head{display:flex;align-items:center;gap:14px;margin-bottom:30px}
       .p-sec-ic{width:46px;height:46px;flex:none;border-radius:50%;background:var(--acc);color:#fff;display:grid;place-items:center;box-shadow:0 8px 20px -8px var(--acc)}
@@ -1533,7 +1547,12 @@
             ctaP: "Pick a profile above and see the experience behind it — a support inbox that needs a steady hand, campaigns that need to perform, or videos that need editing. Then message me on Fiverr for a clear plan and an honest timeline.",
             ctaBtn: "Contact me on Fiverr",
             ctaP1: "Replies in English · Hindi · Bangla", ctaP2: "On-time delivery", ctaP3: "Honest, upfront pricing",
-            footLoc: "Bangladesh", playVideo: "Watch video"
+            footLoc: "Bangladesh", playVideo: "Watch video",
+            cvBtn: "Download CV (PDF)", cvAllBtn: "Download complete CV (PDF)",
+            cvAllNote: "One PDF with every profile on this page — photo included. Each profile also has its own CV download inside it.",
+            cvBusy: "Preparing PDF…", cvSummary: "Professional Summary", cvLanguages: "Languages",
+            cvFallbackNote: "The PDF maker could not load. This is the complete CV — use your browser menu's Print → Save as PDF to save it as a PDF.",
+            cvClose: "Close"
           },
           bn: {
             brandSub: "বিশেষজ্ঞ প্রোফাইল · একটাই সিস্টেম",
@@ -1570,7 +1589,12 @@
             ctaP: "উপরে একটি প্রোফাইল বেছে দেখুন তার পেছনের অভিজ্ঞতা — স্থির হাতে সামলানো সাপোর্ট ইনবক্স, ফল দেওয়া ক্যাম্পেইন, কিংবা যত্নে এডিট করা ভিডিও। তারপর Fiverr-এ মেসেজ করুন, পরিষ্কার পরিকল্পনা আর সৎ সময়সীমা পাবেন।",
             ctaBtn: "Fiverr-এ যোগাযোগ করুন",
             ctaP1: "ইংরেজি · হিন্দি · বাংলায় উত্তর", ctaP2: "সময়মতো ডেলিভারি", ctaP3: "সৎ ও আগাম মূল্য",
-            footLoc: "বাংলাদেশ", playVideo: "ভিডিও দেখুন"
+            footLoc: "বাংলাদেশ", playVideo: "ভিডিও দেখুন",
+            cvBtn: "CV ডাউনলোড করুন (PDF)", cvAllBtn: "সম্পূর্ণ CV ডাউনলোড করুন (PDF)",
+            cvAllNote: "এই পেজের সব প্রোফাইল এক PDF-এ — ছবিসহ। প্রতিটি প্রোফাইলের ভেতরেও আলাদা CV ডাউনলোড আছে।",
+            cvBusy: "PDF তৈরি হচ্ছে…", cvSummary: "পেশাগত সারসংক্ষেপ", cvLanguages: "ভাষা",
+            cvFallbackNote: "PDF মেকার লোড হয়নি। এটাই সম্পূর্ণ CV — ব্রাউজার মেনুর Print → Save as PDF দিয়ে PDF হিসেবে সেভ করুন।",
+            cvClose: "বন্ধ করুন"
           }
         };
         function t(k){ return (UI[LANG] && UI[LANG][k]) || UI.en[k] || k; }
@@ -1915,8 +1939,20 @@
             if (blankVal(MC[k]) && !blankVal(DC[k])) MC[k] = clone(DC[k]);
           });
           var pDigits = digitsOnly(pick(MC.phone) || "");
-          if (pDigits && digitsOnly(MC.phoneHref || "").length < 7)
-            MC.phoneHref = "tel:+" + pDigits;
+          if (pDigits) MC.phoneHref = "tel:+" + pDigits;
+          /* Same trap for Telegram: a stored telegramHref (or the built-in
+             default href merged into a record that omits the field) used
+             to outrank an updated username, so the popup kept opening the
+             old account after an Admin edit. The link is rebuilt from the
+             username / URL actually saved, every time. */
+          var tgRaw = String(pick(MC.telegram) || "").trim();
+          if (tgRaw){
+            if (/^https?:\/\//i.test(tgRaw)) MC.telegramHref = tgRaw;
+            else {
+              var tgUser = tgRaw.replace(/^@/, "").replace(/^(https?:\/\/)?t\.me\//i, "");
+              if (tgUser) MC.telegramHref = "https://t.me/" + tgUser;
+            }
+          }
           return merged;
         }
         var content = (function(){
@@ -2190,6 +2226,7 @@
               '</div>' +
               '<div class="p-actions">' +
                 '<button class="btn btn-acc" data-contact data-i18n="contactDetails">Contact details</button>' +
+                '<button class="btn btn-cv" data-cv="' + k + '"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg><span data-i18n="cvBtn">Download CV (PDF)</span></button>' +
                 '<a class="btn btn-ghost" href="#' + k + '-experience" data-i18n="workExpBtn">Work experience</a>' +
                 '<a class="btn btn-ghost" href="#' + k + '-education" data-i18n="educationBtn">Education</a>' +
                 '<a class="btn btn-ghost samples-act" href="#' + k + '-samples" data-i18n="samplesBtn">Samples</a>' +
@@ -2338,14 +2375,19 @@
         function digitsOnly(s){ return String(s == null ? "" : s).replace(/\D/g, ""); }
         function telegramInfo(C){
           var raw = String(F(C, "telegram") || "").trim();
-          var href = String(C.telegramHref || "").trim();
-          if (!href && raw){
+          /* The saved username / URL is the source of truth: the link is
+             derived from it first, so an Admin edit to the Telegram name
+             changes where the tap goes. A stored telegramHref is only a
+             fallback for a record whose telegram field is unusable. */
+          var href = "";
+          if (raw){
             if (/^https?:\/\//i.test(raw)) href = raw;
             else {
               var user = raw.replace(/^@/, "").replace(/^(https?:\/\/)?t\.me\//i, "");
               if (user) href = "https://t.me/" + user;
             }
           }
+          if (!href) href = String(C.telegramHref || "").trim();
           var label = raw;
           if (label && !/^https?:\/\//i.test(label) && label.charAt(0) !== "@")
             label = "@" + label.replace(/^(https?:\/\/)?t\.me\//i, "");
@@ -2540,12 +2582,17 @@
                entirely rather than rendered as a dead tap target. */
             var phoneLabel = F(C, "phone");
             var phoneDigits = digitsOnly(phoneLabel);
-            var telHref = C.phoneHref || "";
-            if (digitsOnly(telHref).length < 7 && phoneDigits) telHref = "tel:+" + phoneDigits;
+            /* tel: is ALWAYS rebuilt from the number on display — a stored
+               phoneHref (or the built-in default merged into a record that
+               omits it) used to keep the old number as the tap target after
+               the owner changed the number in Admin. */
+            var telHref = phoneDigits ? "tel:+" + phoneDigits : "";
             var emailVal = F(C, "email");
+            var waRaw = String(F(C, "whatsapp") || "").trim();
+            var waLabel = (waRaw && !/^https?:\/\//i.test(waRaw)) ? waRaw : phoneLabel;
             var rowsHtml =
               (phoneDigits ? '<a class="c-row" href="' + esc(telHref) + '"><span class="c-ic">' + IC_PHONE + '</span><span><small>' + esc(t("phone")) + '</small><b>' + esc(phoneLabel) + '</b></span></a>' : '') +
-              (wa ? '<a class="c-row" href="' + esc(wa) + '" target="_blank" rel="noopener"><span class="c-ic">' + IC_WA + '</span><span><small>' + esc(t("whatsapp")) + '</small><b>' + esc(phoneLabel) + '</b></span></a>' : '') +
+              (wa ? '<a class="c-row" href="' + esc(wa) + '" target="_blank" rel="noopener"><span class="c-ic">' + IC_WA + '</span><span><small>' + esc(t("whatsapp")) + '</small><b>' + esc(waLabel) + '</b></span></a>' : '') +
               (emailVal ? '<a class="c-row" href="mailto:' + esc(emailVal) + '"><span class="c-ic">' + IC_MAIL + '</span><span><small>' + esc(t("email")) + '</small><b>' + esc(emailVal) + '</b></span></a>' : '') +
               (tg.href ? '<a class="c-row" href="' + esc(tg.href) + '" target="_blank" rel="noopener"><span class="c-ic">' + IC_TG + '</span><span><small>' + esc(t("telegram")) + '</small><b>' + esc(tg.label) + '</b></span></a>' : '') +
               '<div class="c-row"><span class="c-ic">' + IC_PIN + '</span><span><small>' + esc(t("location")) + '</small><b>' + esc(F(C, "location")) + '</b></span></div>';
@@ -2556,6 +2603,201 @@
           applyProfilePhoto();
           renderFiverr();
         }
+
+        /* ================= CV downloads (PDF) =================
+           Every profile view carries its own "Download CV (PDF)" button
+           and the hub carries one for the complete CV — every sector on
+           the page in a single PDF. The document is built live from the
+           same content data the page renders (so Admin edits flow into
+           the CV too), in the visitor's current language, and the
+           owner's photo — the exact photo the page is showing, Admin-set
+           hero.photo or the built-in portrait — is embedded in it.
+           The photo is fetched to a data URL first so it is baked into
+           the PDF at full quality instead of depending on the PDF
+           renderer reaching an outside image host. */
+        function stripMd(s){ return String(s == null ? "" : s).replace(/\*\*([^*]+)\*\*/g, "$1"); }
+        function cvPhotoSrc(){
+          var H = content.hero || {};
+          var src = (typeof H.photo === "string" && H.photo.trim()) ? H.photo.trim() : PORTRAIT_DEFAULT;
+          if (src.indexOf("data:") === 0) return Promise.resolve(src);
+          return fetch(src).then(function(r){
+            if (!r.ok) throw new Error("photo fetch failed");
+            return r.blob();
+          }).then(function(b){
+            return new Promise(function(res){
+              var fr = new FileReader();
+              fr.onload = function(){ res(String(fr.result)); };
+              fr.onerror = function(){ res(src); };
+              fr.readAsDataURL(b);
+            });
+          }).catch(function(){ return src; });
+        }
+        function cvH(txt, acc){
+          return '<h3 style="font-family:\'Sora\',\'Hind Siliguri\',sans-serif;font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:' + acc + ';border-bottom:2px solid ' + acc + ';padding-bottom:5px;margin:22px 0 12px">' + esc(txt) + '</h3>';
+        }
+        function cvSectorBlock(s, firstInDoc){
+          var P = s.data, acc = s.color;
+          var out = '<div' + (firstInDoc ? '' : ' style="page-break-before:always"') + '>';
+          out += '<div style="border-left:6px solid ' + acc + ';padding:3px 0 3px 14px;margin:' + (firstInDoc ? '4px' : '0') + ' 0 4px">' +
+            '<div style="font-family:\'Sora\',\'Hind Siliguri\',sans-serif;font-size:21px;font-weight:800;color:#17302e;line-height:1.2">' + esc(F(P, "title") || s.navName) + '</div>' +
+            '<div style="font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:' + acc + ';margin-top:3px">' + esc(s.navName) + '</div></div>';
+          var bio = stripMd(F(P, "bio"));
+          if (bio){
+            out += cvH(t("cvSummary"), acc);
+            out += '<p style="margin:0;color:#33473f">' + esc(bio) + '</p>';
+          }
+          var exp = P.experience || [];
+          if (exp.length){
+            out += cvH(t("secWorkExp"), acc);
+            out += exp.map(function(j){
+              var pts = trimList(Flist(j, "points"));
+              return '<div style="margin:0 0 15px;page-break-inside:avoid">' +
+                '<table style="width:100%;border-collapse:collapse"><tr>' +
+                '<td style="font-family:\'Sora\',\'Hind Siliguri\',sans-serif;font-size:15px;font-weight:700;color:#17302e;padding:0">' + esc(F(j, "role")) + '</td>' +
+                '<td style="font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:600;color:' + acc + ';text-align:right;white-space:nowrap;padding:0">' + esc(String(F(j, "date")).toUpperCase()) + '</td>' +
+                '</tr></table>' +
+                '<div style="font-weight:700;font-size:13.5px;color:#47605c">' + esc(F(j, "org")) + '</div>' +
+                (pts.length ? '<ul style="margin:6px 0 0;padding-left:17px;color:#33473f">' + pts.map(function(pt){ return '<li style="margin-bottom:3px">' + esc(stripMd(pt)) + '</li>'; }).join("") + '</ul>' : '') +
+                '</div>';
+            }).join("");
+          }
+          var edu = P.education || [];
+          if (edu.length){
+            out += cvH(t("secEducation"), acc);
+            out += edu.map(function(e){
+              return '<div style="margin:0 0 10px;page-break-inside:avoid"><b style="color:#17302e">' + esc(F(e, "title")) + '</b>' +
+                (F(e, "school") ? ' — <span style="font-weight:700;color:#47605c">' + esc(F(e, "school")) + '</span>' : '') +
+                (F(e, "note") ? '<div style="color:#47605c;font-size:13px">' + esc(F(e, "note")) + '</div>' : '') + '</div>';
+            }).join("");
+          }
+          var skills = P.skills || [];
+          if (skills.length){
+            out += cvH(t("secSkills"), acc);
+            var half = Math.ceil(skills.length / 2);
+            function skCol(list){
+              return '<td style="width:50%;vertical-align:top;padding:0">' + list.map(function(sk){
+                var lv = Math.max(0, Math.min(100, parseInt(sk.level, 10) || 0));
+                return '<div style="margin:0 14px 9px 0"><table style="width:100%;border-collapse:collapse"><tr>' +
+                  '<td style="padding:0;font-weight:600;color:#33473f">' + esc(F(sk, "name")) + '</td>' +
+                  '<td style="padding:0;text-align:right;font-weight:800;color:#17302e">' + lv + '%</td></tr></table>' +
+                  '<div style="height:5px;background:#e7e0cd;border-radius:3px;margin-top:3px"><div style="height:5px;width:' + lv + '%;background:' + acc + ';border-radius:3px"></div></div></div>';
+              }).join("") + '</td>';
+            }
+            out += '<table style="width:100%;border-collapse:collapse"><tr>' + skCol(skills.slice(0, half)) + skCol(skills.slice(half)) + '</tr></table>';
+          }
+          var tools = trimList(Flist(P, "tools"));
+          if (tools.length){
+            out += '<div style="margin-top:6px"><b style="color:#17302e">' + esc(t("toolsHead")) + ':</b> <span style="color:#33473f">' + esc(tools.join(" · ")) + '</span></div>';
+          }
+          var langs = P.languages || [];
+          if (langs.length){
+            out += cvH(t("cvLanguages"), acc);
+            out += langs.map(function(l){
+              return '<div style="margin:0 0 7px;page-break-inside:avoid"><b style="color:#17302e">' + esc(F(l, "name")) + '</b>' +
+                (F(l, "tag") ? ' <span style="font-size:11.5px;font-weight:700;color:' + acc + '">' + esc(F(l, "tag")) + '</span>' : '') +
+                (F(l, "note") ? '<div style="color:#47605c;font-size:13px">' + esc(F(l, "note")) + '</div>' : '') + '</div>';
+            }).join("");
+          }
+          out += '</div>';
+          return out;
+        }
+        function cvDocHtml(list, photo){
+          var H = content.hero || {}, C = content.contact || {};
+          var tg = telegramInfo(C);
+          var roleLine = list.length === 1 ? (F(list[0].data, "title") || list[0].navName) : F(H, "title");
+          var contactBits = [];
+          if (F(C, "phone")) contactBits.push('<span><b>' + esc(t("phone")) + ':</b> ' + esc(F(C, "phone")) + '</span>');
+          if (F(C, "email")) contactBits.push('<span><b>' + esc(t("email")) + ':</b> ' + esc(F(C, "email")) + '</span>');
+          if (tg.label) contactBits.push('<span><b>' + esc(t("telegram")) + ':</b> ' + esc(tg.label) + '</span>');
+          if (F(C, "location")) contactBits.push('<span><b>' + esc(t("location")) + ':</b> ' + esc(F(C, "location")) + '</span>');
+          var head =
+            '<table style="width:100%;border-collapse:collapse"><tr>' +
+            '<td style="vertical-align:top;padding:0 20px 0 0">' +
+              '<div style="font-family:\'Sora\',\'Hind Siliguri\',sans-serif;font-size:31px;font-weight:800;color:#17302e;line-height:1.15">' + esc(F(H, "name")) + '</div>' +
+              '<div style="font-size:14.5px;font-weight:700;color:#0e5a54;margin-top:4px">' + esc(roleLine) + '</div>' +
+              '<div style="font-size:12.5px;color:#47605c;margin-top:3px">' + esc(statusLabel(statusMode())) + '</div>' +
+              '<div style="margin-top:13px;font-size:13px;color:#17302e;line-height:1.75">' + contactBits.join('<span style="color:#b9ae94"> &nbsp;·&nbsp; </span>') + '</div>' +
+            '</td>' +
+            '<td style="vertical-align:top;padding:0;width:120px">' +
+              '<img src="' + esc(photo) + '" alt="" style="width:118px;height:150px;object-fit:cover;border-radius:10px;border:1px solid #ddd5c2" />' +
+            '</td></tr></table>' +
+            '<div style="border-bottom:3px solid #0e5a54;margin-top:18px"></div>';
+          return '<div style="width:794px;background:#ffffff;color:#17302e;font-family:\'Manrope\',\'Hind Siliguri\',sans-serif;font-size:14px;line-height:1.55;padding:44px 48px">' +
+            head + list.map(function(s, i){ return cvSectorBlock(s, i === 0); }).join("") + '</div>';
+        }
+        var PDF_LIB_URLS = [
+          "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js",
+          "https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js",
+          "https://unpkg.com/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"
+        ];
+        function loadPdfLib(){
+          if (window.html2pdf) return Promise.resolve(true);
+          var chain = Promise.resolve(false);
+          PDF_LIB_URLS.forEach(function(u){
+            chain = chain.then(function(ok){
+              if (ok || window.html2pdf) return true;
+              return loadScriptOnce(u, 20000).then(function(){ return !!window.html2pdf; }).catch(function(){ return !!window.html2pdf; });
+            });
+          });
+          return chain;
+        }
+        function showCvFallback(html){
+          var old = document.getElementById("cvFallback");
+          if (old) old.remove();
+          var ov = document.createElement("div");
+          ov.id = "cvFallback";
+          ov.style.cssText = "position:fixed;inset:0;z-index:200;background:rgba(10,22,20,.74);overflow:auto;padding:16px";
+          ov.innerHTML =
+            '<div style="max-width:830px;margin:0 auto">' +
+            '<div style="display:flex;gap:12px;align-items:center;background:#fffdf8;border-radius:12px;padding:12px 16px;margin-bottom:12px;font-size:14px;color:#17302e"><span style="flex:1">' + esc(t("cvFallbackNote")) + '</span>' +
+            '<button type="button" id="cvFbClose" style="background:#17302e;color:#fff;border:0;border-radius:9px;padding:9px 16px;font-weight:700;cursor:pointer;flex:none">' + esc(t("cvClose")) + '</button></div>' +
+            '<div style="background:#ffffff;border-radius:6px;overflow:hidden">' + html.replace("width:794px", "width:100%;max-width:794px") + '</div></div>';
+          document.body.appendChild(ov);
+          ov.querySelector("#cvFbClose").addEventListener("click", function(){ ov.remove(); });
+          ov.addEventListener("click", function(e){ if (e.target === ov) ov.remove(); });
+        }
+        function cvFileName(list){
+          var name = stripMd(F(content.hero || {}, "name")) || "CV";
+          var part = list.length === 1 ? list[0].navName : "Complete - All Profiles";
+          return (name + " - CV - " + part).replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-") + ".pdf";
+        }
+        function downloadCv(list, btn){
+          if (!list.length) return;
+          var oldHtml = btn ? btn.innerHTML : "";
+          if (btn){ btn.disabled = true; btn.innerHTML = esc(t("cvBusy")); }
+          function done(){ if (btn){ btn.disabled = false; btn.innerHTML = oldHtml; } }
+          cvPhotoSrc().then(function(photo){
+            var html = cvDocHtml(list, photo);
+            return loadPdfLib().then(function(ok){
+              if (!ok || !window.html2pdf){ showCvFallback(html); done(); return; }
+              var holder = document.createElement("div");
+              holder.style.cssText = "position:fixed;left:-12000px;top:0";
+              holder.innerHTML = html;
+              document.body.appendChild(holder);
+              var opt = {
+                margin: 0,
+                filename: cvFileName(list),
+                image: { type: "jpeg", quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false },
+                jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+                pagebreak: { mode: ["css", "legacy"] }
+              };
+              window.html2pdf().set(opt).from(holder.firstElementChild).save()
+                .then(function(){ holder.remove(); done(); })
+                .catch(function(){ holder.remove(); showCvFallback(html); done(); });
+            });
+          }).catch(function(){ done(); });
+        }
+        document.addEventListener("click", function(ev){
+          if (!ev.target.closest) return;
+          var all = ev.target.closest("[data-cv-all]");
+          if (all){ downloadCv(sectorList(), all); return; }
+          var one = ev.target.closest("[data-cv]");
+          if (one){
+            var key = one.getAttribute("data-cv");
+            downloadCv(sectorList().filter(function(s){ return s.viewKey === key; }), one);
+          }
+        });
 
         /* ================= language switch ================= */
         document.querySelectorAll(".lang-switch button").forEach(function(b){
