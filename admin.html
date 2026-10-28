@@ -166,6 +166,15 @@
     word-break:break-all}
   .status-now{font-size:13.5px;color:var(--ink2);margin-top:10px}
   .status-now strong{color:var(--accent)}
+
+  /* CV PDF download card */
+  .cv-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 0;
+    border-top:1px dashed var(--line)}
+  .cv-row:first-of-type{border-top:none}
+  .cv-row .cv-name{font-weight:700;margin-right:auto;display:flex;align-items:center;gap:9px}
+  .cv-row .cv-dot{width:11px;height:11px;border-radius:50%;flex:none}
+  .cv-all{margin-top:14px;border-top:1px solid var(--line);padding-top:14px;
+    display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 </style>
 </head>
 <body>
@@ -341,7 +350,7 @@
     <!-- Contact -->
     <section class="card">
       <h2 data-i18n="contactH">Contact details</h2>
-      <p class="hint" data-i18n="contactHint">Shown when a visitor taps Contact on the main site. Use each Test link to check exactly what a visitor's tap will open — Telegram goes to t.me, WhatsApp to wa.me, email opens their mail app.</p>
+      <p class="hint" data-i18n="contactHint">Shown when a visitor taps Contact on the main site. Contact details now publish to Firebase by themselves as soon as you finish editing a field — you do not have to hunt for the Save button — and the phone (tel:) and Telegram (t.me) tap targets are rebuilt automatically from the number and username you type, so a changed number can never leave an old link behind on the main site. Use each Test link to check exactly what a visitor's tap will open — Telegram goes to t.me, WhatsApp to wa.me, email opens their mail app.</p>
       <div class="grid2">
         <div class="field"><label>Phone</label><input type="tel" data-bind="contact.phone" placeholder="+880…" />
           <a class="test-link hidden" id="test-phone" href="#" target="_blank" rel="noopener"></a></div>
@@ -361,6 +370,7 @@
         <div class="field"><label class="tag-bn">ঠিকানা / এলাকা</label><input type="text" data-bind="contact.location.bn" /></div>
       </div>
       <div class="lang-warn hidden" data-warn="contact.location">One language is empty — fill both so the main site never shows a blank. / একটা ভাষা খালি আছে, দুটোই পূরণ করুন।</div>
+      <div class="upload-status" id="contactStatus"></div>
     </section>
 
     <!-- Banners -->
@@ -378,6 +388,28 @@
       <div class="tabs" id="profileTabs"></div>
       <div style="margin-bottom:16px"><button class="btn small" id="btnAddSector" type="button">+ Add sector / নতুন সেক্টর যোগ করুন</button></div>
       <div id="profileEditor"></div>
+    </section>
+
+    <!-- CV PDF downloads -->
+    <section class="card">
+      <h2>Download CV as PDF / PDF সিভি ডাউনলোড</h2>
+      <p class="hint">A professional A4 CV built from the data currently in this editor (Name, Bio, Contact, Status and each sector's Experience, Education, Skills, Languages and Samples). Each sector gets its own separate CV, and the combined CV puts every sector on the site into one file. Your profile photo is included <strong>full-frame at 100% — never cropped</strong>: if no custom photo is saved yet, upload one in the Hero section above first, otherwise the CV shows your initials instead. Each button opens a print-ready CV in a new tab — there choose <strong>Print → Save as PDF</strong> (it also tries to open the print dialog by itself).</p>
+      <div class="field" style="max-width:260px;margin-bottom:6px">
+        <label>CV language / সিভির ভাষা</label>
+        <select id="cvLang">
+          <option value="en">English</option>
+          <option value="bn">বাংলা</option>
+        </select>
+      </div>
+      <div id="cvList"></div>
+      <div class="cv-all">
+        <button class="btn primary" id="btnCvAll" type="button">Download ALL sectors — one combined CV (PDF)</button>
+        <span class="sub-hint" style="font-size:13px;color:var(--ink2)">সব সেক্টর একসাথে একটা PDF-এ</span>
+      </div>
+      <div class="note-box">
+        <strong>Note:</strong> these buttons download from the Admin editor. The same per-sector and combined CV buttons for <em>visitors</em> belong on the main portfolio page itself — that page is a separate file, so it needs its own update before visitors see download buttons there.
+        <br />এই বাটনগুলো অ্যাডমিন এডিটর থেকে ডাউনলোডের জন্য। ভিজিটরদের জন্য একই বাটন মূল পোর্টফোলিও পেজে থাকতে হবে — সেটা আলাদা ফাইল, তাই সেখানে দেখাতে হলে ওই ফাইলটাও আপডেট করতে হবে।
+      </div>
     </section>
 
     <!-- Fiverr -->
@@ -503,7 +535,7 @@ function defaultContent(){
       ]
     },
     contact: {
-      phone: "", whatsapp: "", email: "", telegram: "", fiverr: "",
+      phone: "", phoneHref: "", whatsapp: "", email: "", telegram: "", telegramHref: "", fiverr: "",
       location: L("Bangladesh", "বাংলাদেশ")
     },
     status: {
@@ -983,6 +1015,9 @@ $("btnSave").addEventListener("click", function(){
     renderAll();
     toast(filled + " empty language field(s) were filled from the other language, so the main site never shows a blank.", 4200);
   }
+  /* Rebuild the phone/Telegram tap targets from the typed values so a
+     full Save can never ship new labels with old links. */
+  syncContactDerived();
   var btn = $("btnSave"); btn.disabled = true; btn.textContent = "Saving…";
   db.ref(NODE).set(content).then(function(){
     /* Verify the write actually landed — a save that Firebase accepted
@@ -1205,7 +1240,7 @@ function renderAll(){
     if (typeof v === "string" && el.value !== v) el.value = v;
   });
   renderStats(); renderBanners(); renderTabs(); renderProfile(); renderGigs();
-  refreshLangWarnings(); updateContactTests(); updateStatusNow(); updateProfilePhotoPreview();
+  refreshLangWarnings(); updateContactTests(); updateStatusNow(); updateProfilePhotoPreview(); renderCvDownloads();
 }
 
 /* ================= Profile photo preview ================= */
@@ -1266,10 +1301,60 @@ function contactHref(kind, v){
 function updateContactTests(){
   ["phone", "whatsapp", "email", "telegram", "fiverr"].forEach(function(k){
     var a = $("test-" + k); if (!a) return;
-    var href = contactHref(k, getPath(content, "contact." + k));
+    var href = "";
+    if (k === "phone") href = String(getPath(content, "contact.phoneHref") || "") || contactHref(k, getPath(content, "contact.phone"));
+    else if (k === "telegram") href = String(getPath(content, "contact.telegramHref") || "") || contactHref(k, getPath(content, "contact.telegram"));
+    else if (k === "whatsapp"){
+      href = contactHref(k, getPath(content, "contact.whatsapp"));
+      if (!href) href = contactHref(k, getPath(content, "contact.phone")); /* visitors fall back to the phone number, exactly like the main site */
+    }
+    else href = contactHref(k, getPath(content, "contact." + k));
     if (href){ a.href = href; a.textContent = "Test link ↗ " + href; a.classList.remove("hidden"); }
     else { a.classList.add("hidden"); a.removeAttribute("href"); }
   });
+}
+
+/* ================= Contact: derived tap targets + immediate publish =================
+   Why this exists: the main portfolio carries separate phoneHref /
+   telegramHref tap targets, inherited from its built-in defaults. The
+   Admin form never wrote those fields, so when the owner changed the
+   phone number or Telegram username here, the main site's safety net
+   kept the OLD href (it only rebuilds a href that looks empty) — the
+   popup showed the new number but tapping it dialled / opened the old
+   one, which is exactly the "contact update hoy na, link kaj kore na"
+   report. Now the hrefs are re-derived from the typed values on every
+   edit and before every save, and the whole contact block publishes
+   itself to Firebase (portfolio/content/contact) as soon as a field is
+   finished, with a read-back check — the same pattern that fixed the
+   profile photo. The big Save still carries the same values. */
+function syncContactDerived(){
+  var C = content.contact; if (!C) return;
+  var digits = String(C.phone || "").replace(/\D/g, "");
+  C.phoneHref = digits ? "tel:+" + digits : "";
+  var tg = String(C.telegram || "").trim();
+  if (!tg) C.telegramHref = "";
+  else if (/^https?:\/\//i.test(tg)) C.telegramHref = tg;
+  else C.telegramHref = "https://t.me/" + tg.replace(/^@+/, "").replace(/^(https?:\/\/)?t\.me\//i, "");
+  /* The main site reads the Fiverr profile URL from fiverr.profileUrl
+     first and only falls back to contact.fiverr — mirror the Contact
+     card's link across so editing it here can never be shadowed. */
+  var fv = String(C.fiverr || "").trim();
+  if (fv && content.fiverr && String(content.fiverr.profileUrl || "") !== fv) content.fiverr.profileUrl = fv;
+}
+function persistContact(){
+  if (!db) return Promise.resolve(false);
+  syncContactDerived();
+  var snapshot = JSON.parse(JSON.stringify(content.contact));
+  return db.ref(NODE + "/contact").set(snapshot).then(function(){
+    return db.ref(NODE + "/contact").once("value");
+  }).then(function(snap){
+    var v = snap.val() || {};
+    return String(v.phone || "") === String(snapshot.phone || "") &&
+           String(v.email || "") === String(snapshot.email || "") &&
+           String(v.telegram || "") === String(snapshot.telegram || "") &&
+           String(v.phoneHref || "") === String(snapshot.phoneHref || "") &&
+           String(v.telegramHref || "") === String(snapshot.telegramHref || "");
+  }).catch(function(){ return false; });
 }
 function updateStatusNow(){
   var el = $("statusNow"); if (!el) return;
@@ -1311,7 +1396,7 @@ editor.addEventListener("input", function(e){
     setPath(content, bp, t.value); markDirty();
     refreshLangWarnings();
     if (bp === "hero.photo") updateProfilePhotoPreview();
-    if (bp.indexOf("contact.") === 0) updateContactTests();
+    if (bp.indexOf("contact.") === 0){ syncContactDerived(); updateContactTests(); }
     if (bp.indexOf("status.") === 0) updateStatusNow();
     if (/\.color$/.test(bp)){
       var sw = editor.querySelector('[data-colorfor="' + bp.slice(0, -6) + '"]');
@@ -1350,6 +1435,25 @@ editor.addEventListener("change", function(e){
       });
     }
     if (t.getAttribute("data-bind").indexOf("status.") === 0) updateStatusNow();
+    if (t.getAttribute("data-bind").indexOf("contact.") === 0){
+      /* Contact publishes itself the moment a field is finished — the
+         owner should never again change a number, press nothing, and
+         wonder why the main site still shows (and dials) the old one. */
+      syncContactDerived(); updateContactTests();
+      var cst = $("contactStatus");
+      if (cst){ cst.className = "upload-status"; cst.textContent = "Saving contact details to Firebase… / যোগাযোগের তথ্য সেভ হচ্ছে…"; }
+      persistContact().then(function(saved){
+        var cst2 = $("contactStatus"); if (!cst2) return;
+        if (saved){
+          cst2.className = "upload-status ok";
+          cst2.textContent = "Contact details saved to Firebase ✓ The main site now shows the new details and its tap links (tel:, wa.me, mailto:, t.me) point at them. / যোগাযোগের তথ্য সেভ হয়েছে ✓";
+          toast("Contact details updated ✓ Main site links now use them.");
+        } else {
+          cst2.className = "upload-status warn";
+          cst2.textContent = "Contact edited here but not published by itself (not connected?) — press Save at the bottom to publish it with everything else.";
+        }
+      });
+    }
   }
   if (t.hasAttribute("data-bind-check")){ setPath(content, t.getAttribute("data-bind-check"), t.checked); markDirty(); }
   if (t.hasAttribute("data-colorfor")){
@@ -1589,7 +1693,204 @@ function handleProfileUpload(input){
   }
 }
 
-/* ================= Admin UI language toggle (labels only; content stays EN + বাংলা side by side) ================= */
+/* ================= CV PDF downloads =================
+   Builds a professional, print-ready A4 CV document from the data in
+   the editor and opens it in a new tab, where Print → "Save as PDF"
+   produces the PDF (the document also tries to open the print dialog
+   itself once its images have loaded). One CV per sector, plus one
+   combined CV with every sector. The profile photo is printed
+   full-frame — width set, height automatic, no cropping — so the
+   whole photo is always in the PDF at 100%. */
+function cvPick(v, lang){
+  if (v && typeof v === "object" && !Array.isArray(v) && ("en" in v || "bn" in v))
+    return String((lang === "bn" ? (v.bn || v.en) : (v.en || v.bn)) || "");
+  return v == null ? "" : String(v);
+}
+function cvFmt(s){
+  return esc(s).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/\n/g, "<br />");
+}
+function renderCvDownloads(){
+  var box = $("cvList"); if (!box) return;
+  var keys = sectorKeys();
+  if (!keys.length){ box.innerHTML = '<p class="hint">No sectors yet — add a sector above and its CV download appears here.</p>'; return; }
+  box.innerHTML = keys.map(function(k){
+    var p = content.profiles[k] || {};
+    return '<div class="cv-row"><span class="cv-name"><span class="cv-dot" style="background:' +
+      esc(p.color || "#0d7a4c") + '"></span>' + esc(sectorName(k)) + '</span>' +
+      '<button class="btn small" type="button" data-cv="' + esc(k) + '">Download this CV (PDF)</button></div>';
+  }).join("");
+}
+function cvSectorHtml(key, lang){
+  var p = content.profiles[key] || {};
+  var color = p.color || "#0d7a4c";
+  var h = '<section class="sector">';
+  h += '<h2 style="border-color:' + esc(color) + ';color:' + esc(color) + '">' + esc(cvPick(p.title, lang)) + '</h2>';
+  var tag = cvPick(p.tagline, lang);
+  if (tag) h += '<p class="tagline">' + cvFmt(tag) + '</p>';
+  var exp = p.experience || [];
+  if (exp.length){
+    h += '<h3>' + (lang === "bn" ? "কাজের অভিজ্ঞতা" : "Work Experience") + '</h3>';
+    h += exp.map(function(x){
+      var s = '<div class="job"><div class="job-head"><b>' + esc(cvPick(x.role, lang)) + '</b>';
+      if (x.period) s += '<span class="period">' + esc(x.period) + '</span>';
+      s += '</div>';
+      if (x.company) s += '<div class="company">' + esc(x.company) + '</div>';
+      var d = cvPick(x.desc, lang);
+      if (d) s += '<p>' + cvFmt(d) + '</p>';
+      return s + '</div>';
+    }).join("");
+  }
+  var edu = p.education || [];
+  if (edu.length){
+    h += '<h3>' + (lang === "bn" ? "শিক্ষা" : "Education") + '</h3>';
+    h += edu.map(function(x){
+      var s = '<div class="job"><div class="job-head"><b>' + esc(cvPick(x.title, lang)) + '</b>';
+      if (x.period) s += '<span class="period">' + esc(x.period) + '</span>';
+      s += '</div>';
+      if (x.place) s += '<div class="company">' + esc(x.place) + '</div>';
+      var n = cvPick(x.note, lang);
+      if (n) s += '<p>' + cvFmt(n) + '</p>';
+      return s + '</div>';
+    }).join("");
+  }
+  var skills = p.skills || [];
+  if (skills.length){
+    h += '<h3>' + (lang === "bn" ? "দক্ষতা" : "Skills") + '</h3><div class="skills">';
+    h += skills.map(function(x){
+      var lv = Math.max(0, Math.min(100, parseInt(x.level, 10) || 0));
+      return '<div class="sk"><span class="sk-name">' + esc(cvPick(x.name, lang)) + '</span>' +
+        '<span class="track"><i style="width:' + lv + '%;background:' + esc(color) + '"></i></span>' +
+        '<b>' + lv + '%</b></div>';
+    }).join("") + '</div>';
+  }
+  var langs = p.languages || [];
+  if (langs.length){
+    h += '<h3>' + (lang === "bn" ? "ভাষা" : "Languages") + '</h3><p class="langs">' +
+      langs.map(function(x){ return "<b>" + esc(cvPick(x.name, lang)) + "</b> — " + esc(cvPick(x.level, lang)); }).join(" &nbsp;·&nbsp; ") + '</p>';
+  }
+  var samples = (p.samples || []).filter(function(x){ return cvPick(x.title, lang); });
+  if (samples.length){
+    h += '<h3>' + (lang === "bn" ? "কাজের নমুনা" : "Selected Work") + '</h3>';
+    h += samples.map(function(x){
+      var d = cvPick(x.desc, lang);
+      return '<div class="job"><b>' + esc(cvPick(x.title, lang)) + '</b>' + (d ? '<p>' + cvFmt(d) + '</p>' : '') + '</div>';
+    }).join("");
+  }
+  return h + '</section>';
+}
+function buildCvHtml(keys, combined, lang){
+  var H = content.hero || {}, C = content.contact || {};
+  var name = cvPick(H.name, lang) || "CV";
+  var sectorNames = keys.map(function(k){ return cvPick((content.profiles[k] || {}).title, lang); }).filter(Boolean);
+  var docTitle = name + " — " + (combined ? (lang === "bn" ? "সব সেক্টরের সিভি" : "CV (all sectors)") : (sectorNames[0] || "CV"));
+  var photo = String(H.photo || "").trim();
+  var initials = name.split(/\s+/).filter(Boolean).map(function(w){ return w[0]; }).join("").slice(0, 2).toUpperCase() || "A";
+  var photoHtml = photo
+    ? '<img class="photo" src="' + esc(photo) + '" alt="Profile photo of ' + esc(name) + '" />'
+    : '<div class="photo-mono">' + esc(initials) + '</div>';
+  var statusMode = getPath(content, "status.mode") || "available";
+  var statusLabel = cvPick(getPath(content, "status.labels." + statusMode), lang);
+  var contactBits = [];
+  if (C.phone) contactBits.push(esc(C.phone));
+  if (C.email) contactBits.push(esc(C.email));
+  var waDigits = String(C.whatsapp || "").replace(/\D/g, "");
+  if (waDigits) contactBits.push("WhatsApp +" + waDigits);
+  var tgLabel = String(C.telegram || "").trim();
+  if (tgLabel) contactBits.push("Telegram " + esc(/^https?:\/\//i.test(tgLabel) ? tgLabel : "@" + tgLabel.replace(/^@+/, "")));
+  var loc = cvPick(C.location, lang);
+  if (loc) contactBits.push(esc(loc));
+  var fiverrUrl = String((content.fiverr && content.fiverr.profileUrl) || C.fiverr || "").trim();
+  if (fiverrUrl) contactBits.push(esc(fiverrUrl.replace(/^https?:\/\//i, "")));
+  var bio = cvPick(H.bio, lang);
+  var css = '@page{size:A4;margin:14mm 15mm}' +
+    '*{box-sizing:border-box}body{margin:0;color:#1c2420;font-family:"Hind Siliguri",system-ui,"Segoe UI",sans-serif;font-size:13.5px;line-height:1.55;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+    '.toolbar{position:sticky;top:0;background:#173527;color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center;font-size:14px}' +
+    '.toolbar button{background:#2fbf71;border:none;color:#0b140e;font-weight:700;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px}' +
+    '@media print{.toolbar{display:none}}' +
+    '.page{max-width:780px;margin:0 auto;padding:26px 10px 10px}' +
+    'header{display:flex;gap:22px;align-items:flex-start;border-bottom:3px solid #173527;padding-bottom:16px}' +
+    '.photo{width:148px;height:auto;display:block;border:1px solid #cfd6cf;border-radius:8px;background:#f2f3f0}' +
+    '.photo-mono{width:148px;height:180px;display:flex;align-items:center;justify-content:center;font-size:52px;font-weight:700;color:#fff;background:#173527;border-radius:8px}' +
+    'h1{font-size:30px;margin:0 0 2px;line-height:1.15}.roles{font-weight:600;color:#0d7a4c;font-size:15px;margin:0 0 6px}' +
+    '.contact-line{color:#44524a;font-size:13px;margin:0 0 6px}.status{display:inline-block;background:#e2f2e9;color:#0d7a4c;font-weight:700;font-size:12px;padding:3px 10px;border-radius:999px}' +
+    '.bio{margin:14px 0 0;color:#2c3831}' +
+    'section.sector{margin-top:8px}.combined section.sector{break-before:page;page-break-before:always}' +
+    'h2{font-size:21px;border-bottom:2px solid;margin:20px 0 4px;padding-bottom:5px}' +
+    '.tagline{color:#44524a;margin:0 0 6px}h3{font-size:15px;text-transform:uppercase;letter-spacing:.06em;margin:18px 0 8px;color:#1c2420}' +
+    '.job{margin-bottom:11px}.job-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}' +
+    '.period{color:#66736a;font-size:12.5px;white-space:nowrap}.company{color:#0d7a4c;font-weight:600;font-size:13px}' +
+    '.job p{margin:3px 0 0;color:#2c3831}.skills{display:grid;grid-template-columns:1fr 1fr;gap:6px 26px}' +
+    '.sk{display:flex;align-items:center;gap:9px}.sk-name{flex:1}.track{width:110px;height:7px;background:#e3e8e2;border-radius:99px;overflow:hidden;flex:none}.track i{display:block;height:100%}.langs{margin:0}' +
+    'footer{margin-top:26px;border-top:1px solid #d8ddd6;padding-top:8px;color:#66736a;font-size:12px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}' +
+    '.cover-list{margin:12px 0 0;padding:0;list-style:none}.cover-list li{margin-bottom:9px}.cover-list b{font-size:15px}';
+  var h = '<!doctype html><html lang="' + (lang === "bn" ? "bn" : "en") + '"><head><meta charset="utf-8" />' +
+    '<title>' + esc(docTitle) + '</title>' +
+    '<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet" />' +
+    '<style>' + css + '</style></head><body>' +
+    '<div class="toolbar"><button type="button" onclick="window.print()">Print / Save as PDF</button>' +
+    '<span>' + (lang === "bn" ? "প্রিন্ট ডায়ালগে “Save as PDF” বেছে নিন। ছবিসহ পুরো সিভি PDF হবে।" : "In the print dialog choose “Save as PDF”. The photo is included full-frame.") + '</span></div>' +
+    '<div class="page' + (combined ? " combined" : "") + '"><header><div style="flex:1;min-width:0"><h1>' + esc(name) + '</h1>' +
+    '<p class="roles">' + esc(cvPick(H.title, lang)) + '</p>' +
+    (contactBits.length ? '<p class="contact-line">' + contactBits.join(" &nbsp;·&nbsp; ") + '</p>' : '') +
+    (statusLabel ? '<span class="status">' + esc(statusLabel) + '</span>' : '') +
+    (bio ? '<p class="bio">' + cvFmt(bio) + '</p>' : '') +
+    '</div><div style="flex:none">' + photoHtml + '</div></header>';
+  if (combined){
+    h += '<ul class="cover-list">' + keys.map(function(k){
+      var p = content.profiles[k] || {};
+      return '<li><b style="color:' + esc(p.color || "#0d7a4c") + '">' + esc(cvPick(p.title, lang)) + '</b>' +
+        (cvPick(p.tagline, lang) ? ' — ' + cvFmt(cvPick(p.tagline, lang)) : '') + '</li>';
+    }).join("") + '</ul>';
+  }
+  h += keys.map(function(k){ return cvSectorHtml(k, lang); }).join("");
+  h += '<footer><span>' + esc(name) + (sectorNames.length ? " · " + esc(sectorNames.join(" · ")) : "") + '</span>' +
+    '<span>' + esc(fiverrUrl ? fiverrUrl.replace(/^https?:\/\//i, "") : loc) + '</span></footer>' +
+    '</div><script>window.addEventListener("load",function(){' +
+    'var imgs=Array.prototype.slice.call(document.images);' +
+    'var pending=imgs.filter(function(i){return !i.complete;});' +
+    'var done=false;function go(){if(done)return;done=true;setTimeout(function(){window.print();},400);}' +
+    'if(!pending.length){go();}else{var n=pending.length;' +
+    'pending.forEach(function(i){i.onload=i.onerror=function(){if(--n<=0)go();};});' +
+    'setTimeout(go,3000);}});<\/script></body></html>';
+  return h;
+}
+var cvNoPhotoArmedAt = 0;
+function openCvPdf(keys, combined){
+  syncContactDerived();
+  /* Photo at 100%: never silently ship a CV with initials instead of
+     the photo. With no custom photo saved, the first tap warns and
+     stops — upload a photo in the Hero section, or tap again within
+     15 seconds to download without a photo anyway. */
+  if (!String(getPath(content, "hero.photo") || "").trim()){
+    var now = Date.now();
+    if (now - cvNoPhotoArmedAt > 15000){
+      cvNoPhotoArmedAt = now;
+      toast("No profile photo is saved yet — this CV would show your initials instead of your photo. Upload a photo in the Hero section above so the PDF carries it at 100%, or tap Download again to continue without a photo.", 6000);
+      return;
+    }
+    cvNoPhotoArmedAt = 0;
+  }
+  var lang = ($("cvLang") && $("cvLang").value === "bn") ? "bn" : "en";
+  var html = buildCvHtml(keys, !!combined, lang);
+  var blob = new Blob([html], { type: "text/html" });
+  var url = URL.createObjectURL(blob);
+  var w = window.open(url, "_blank");
+  if (!w){
+    toast("The CV tab was blocked — allow popups for this page, then tap the download button again.", 4200);
+    return;
+  }
+  setTimeout(function(){ try { URL.revokeObjectURL(url); } catch(e){} }, 60000);
+  toast("CV opened in a new tab — choose “Save as PDF” in the print dialog.");
+}
+$("cvList").addEventListener("click", function(e){
+  var b = e.target.closest("[data-cv]"); if (!b) return;
+  openCvPdf([b.getAttribute("data-cv")], false);
+});
+$("btnCvAll").addEventListener("click", function(){
+  var keys = sectorKeys();
+  if (!keys.length){ toast("No sectors yet — add a sector first."); return; }
+  openCvPdf(keys, true);
+});
 var I18N = {
   en: { previewH: "Main portfolio site", heroH: "Hero / headline area", statsH: "Stat cards",
     profilePhotoH: "Profile photo",
@@ -1598,7 +1899,7 @@ var I18N = {
     previewHint: "Paste your live portfolio address here to preview it. This admin site is separate — the portfolio itself has no admin button and never links here.",
     heroHint: "Name, title and intro shown at the top of the portfolio. Fill both English and বাংলা — the main site's language switch uses these.",
     statsHint: "Short numbers shown on the hero, e.g. “3+ Years experience”.",
-    contactHint: "Shown when a visitor taps Contact on the main site. Use each Test link to check exactly what a visitor's tap will open — Telegram goes to t.me, WhatsApp to wa.me, email opens their mail app.",
+    contactHint: "Shown when a visitor taps Contact on the main site. Contact details now publish to Firebase by themselves as soon as you finish editing a field, and the phone (tel:) and Telegram (t.me) tap targets are rebuilt automatically from the number and username you type, so a changed number can never leave an old link behind on the main site. Use each Test link to check exactly what a visitor's tap will open — Telegram goes to t.me, WhatsApp to wa.me, email opens their mail app.",
     bannerHint: "Announcements shown as a rotating banner on the main site — one at a time, changing every 5 seconds with a fade/slide, looping in this list's order (hover/tap pauses it). Add text, an optional image and link, switch each one on or off, and use ↑ ↓ to change the rotation order.",
     profilesHint: "Each sector has its own edit tab — its own Experience, Education, Skills, Languages and Work Samples. Add a new sector any time, or delete one from inside its tab.",
     footNote: "Saving writes everything to Firebase (portfolio/content). The main portfolio reads the same place and updates in real time for every visitor — no need to re-upload the portfolio file.",
@@ -1610,7 +1911,7 @@ var I18N = {
     previewHint: "লাইভ পোর্টফোলিওর ঠিকানা এখানে বসালে প্রিভিউ খুলতে পারবেন। এই অ্যাডমিন সাইট আলাদা — মূল পোর্টফোলিওতে কোনো অ্যাডমিন বাটন নেই।",
     heroHint: "পোর্টফোলিওর একদম উপরে দেখানো নাম, টাইটেল ও পরিচিতি। English ও বাংলা দুটোই পূরণ করুন — মূল সাইটের ভাষা বদলের বাটন এগুলোই ব্যবহার করে।",
     statsHint: "হিরোতে দেখানো ছোট সংখ্যা, যেমন “3+ Years experience”。",
-    contactHint: "মূল সাইটে Contact-এ ট্যাপ করলে এগুলো দেখা যাবে। প্রতিটা Test link দিয়ে যাচাই করুন ভিজিটরের ট্যাপে ঠিক কী খুলবে — Telegram যাবে t.me-তে, WhatsApp wa.me-তে, ইমেইল খুলবে মেইল অ্যাপ।",
+    contactHint: "মূল সাইটে Contact-এ ট্যাপ করলে এগুলো দেখা যাবে। যোগাযোগের তথ্য এখন ফিল্ড এডিট শেষ হলেই নিজে নিজে Firebase-এ পাবলিশ হয়ে যায়, আর ফোন (tel:) ও Telegram (t.me) লিংক আপনার লেখা নম্বর/ইউজারনেম থেকেই অটো তৈরি হয় — তাই নম্বর বদলালে পুরনো লিংক আর থেকে যাবে না। প্রতিটা Test link দিয়ে যাচাই করুন ভিজিটরের ট্যাপে ঠিক কী খুলবে — Telegram যাবে t.me-তে, WhatsApp wa.me-তে, ইমেইল খুলবে মেইল অ্যাপ।",
     bannerHint: "মূল সাইটে ঘূর্ণায়মান ব্যানার হিসেবে দেখানো ঘোষণা — একবারে একটা, প্রতি ৫ সেকেন্ডে ফেড/স্লাইড হয়ে বদলায়, এই তালিকার ক্রমেই ঘুরতে থাকে (হোভার/ট্যাপ করলে থামে)। লেখা, চাইলে ছবি ও লিংক যোগ করুন, প্রতিটা আলাদা করে অন/অফ করুন, আর ↑ ↓ দিয়ে ঘূর্ণনের ক্রম বদলান।",
     profilesHint: "প্রতিটা সেক্টরের নিজের এডিট ট্যাব আছে — নিজের Experience, Education, Skills, Languages ও Work Samples। যেকোনো সময় নতুন সেক্টর যোগ করা যাবে, আর ট্যাবের ভেতর থেকেই সেক্টর মোছা যাবে।",
     footNote: "Save করলে সবকিছু Firebase-এ (portfolio/content) যাবে। মূল পোর্টফোলিও একই জায়গা থেকে পড়ে, তাই সব ভিজিটরের কাছে সাথে সাথে আপডেট হবে — পোর্টফোলিও ফাইল আবার আপলোড করতে হবে না।",
