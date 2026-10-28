@@ -111,6 +111,12 @@
   .switch-row input{width:19px;height:19px;accent-color:var(--accent)}
   .thumb{margin-top:8px;border:1px solid var(--line);border-radius:8px;max-width:220px;
     width:100%;display:block;background:var(--surface2)}
+  .profile-photo-row{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+  .profile-preview{width:150px;flex:none}
+  .profile-preview img{width:150px;height:190px;object-fit:cover;object-position:center 15%;
+    border-radius:10px;border:1px solid var(--line);background:var(--surface2);display:block}
+  .profile-preview .cap{font-size:12.5px;color:var(--ink2);margin-top:6px;text-align:center}
+  .profile-fields{flex:1;min-width:250px;display:flex;flex-direction:column;gap:12px}
   .thumb-empty{font-size:13px;color:var(--ink2);margin-top:6px}
   .upload-status{font-size:13px;margin-top:6px;min-height:18px}
   .upload-status.ok{color:var(--ok)} .upload-status.warn{color:var(--warn)} .upload-status.err{color:var(--danger)}
@@ -241,6 +247,33 @@
         <div class="field"><label class="tag-bn">পরিচিতি</label><textarea data-bind="hero.bio.bn"></textarea></div>
       </div>
       <div class="lang-warn hidden" data-warn="hero.bio">One language is empty — fill both so the main site never shows a blank. / একটা ভাষা খালি আছে, দুটোই পূরণ করুন।</div>
+      <h3 class="subhead" data-i18n="profilePhotoH">Profile photo</h3>
+      <p class="hint" data-i18n="profilePhotoHint">The portrait shown in the centre of the hub and at the top of every profile on the main site. Upload a new photo or paste an image link, then press Save — the photo is stored in Firebase (portfolio/content, hero.photo) together with everything else.</p>
+      <div class="profile-photo-row">
+        <div class="profile-preview">
+          <img id="profilePhotoPreview" class="hidden" alt="Current profile photo preview"
+            onerror="this.classList.add('hidden');var e=document.getElementById('profilePhotoEmpty');e.classList.remove('hidden');e.textContent='Photo failed to load — check the link, or upload the file instead. / ছবিটা লোড হয়নি — লিংকটা দেখুন, অথবা ফাইল আপলোড করুন।';" />
+          <div class="thumb-empty" id="profilePhotoEmpty">No custom photo saved yet — the main site is showing its built-in portrait. Upload a photo or paste a link, then press Save. / এখনো কাস্টম ছবি সেভ হয়নি — মূল সাইটে বিল্ট-ইন পোর্ট্রেটটাই দেখাচ্ছে।</div>
+          <div class="cap">Preview · 450 × 570</div>
+        </div>
+        <div class="profile-fields">
+          <div class="field">
+            <label>Photo — image URL / ছবির লিংক</label>
+            <input type="url" data-bind="hero.photo" placeholder="https://…" />
+            <div class="sub-hint">Paste a direct image link, or use the upload below — either way, press Save at the bottom to publish.</div>
+          </div>
+          <div class="field">
+            <label>Photo — upload a file / ছবি আপলোড করুন</label>
+            <input type="file" accept="image/*" data-profile-upload="hero.photo" />
+            <div class="sub-hint">Uploads go to Firebase Storage (portfolio/profile/). If Storage is not enabled, the photo is saved inside the database instead (keep it under ~700 KB). Best size: 900 × 1140 px portrait, face near the centre-top.</div>
+            <div class="upload-status" id="profilePhotoStatus"></div>
+          </div>
+          <div>
+            <button class="btn small danger" id="btnClearProfilePhoto" type="button">Remove custom photo / কাস্টম ছবি সরান</button>
+            <div class="sub-hint" style="margin-top:4px">Clears the saved photo so the main site goes back to its built-in portrait after you Save.</div>
+          </div>
+        </div>
+      </div>
       <h3 class="subhead" data-i18n="statsH">Stat cards</h3>
       <p class="hint" data-i18n="statsHint">Short numbers shown on the hero, e.g. “3+ Years experience”.</p>
       <div class="items" id="list-stats"></div>
@@ -439,6 +472,7 @@ function defaultContent(){
               "কাস্টমার সাপোর্ট স্পেশালিস্ট · মিডিয়া বায়ার · ভিডিও এডিটর"),
       bio: L("Former Bangladesh Army member (2022–2025) bringing discipline, speed and care to customer support, ad campaigns and video editing for online businesses.",
              "সাবেক বাংলাদেশ আর্মি সদস্য (২০২২–২০২৫) — শৃঙ্খলা, গতি আর যত্ন নিয়ে অনলাইন ব্যবসার জন্য কাস্টমার সাপোর্ট, অ্যাড ক্যাম্পেইন ও ভিডিও এডিটিং সার্ভিস দিই।"),
+      photo: "",
       stats: [
         { value: "3+", label: L("Years of support experience", "বছরের সাপোর্ট অভিজ্ঞতা") },
         { value: "130+", label: L("Vertical videos edited per week", "সপ্তাহে এডিট করা ভার্টিকাল ভিডিও") },
@@ -1093,8 +1127,37 @@ function renderAll(){
     if (typeof v === "string" && el.value !== v) el.value = v;
   });
   renderStats(); renderBanners(); renderTabs(); renderProfile(); renderGigs();
-  refreshLangWarnings(); updateContactTests(); updateStatusNow();
+  refreshLangWarnings(); updateContactTests(); updateStatusNow(); updateProfilePhotoPreview();
 }
+
+/* ================= Profile photo preview ================= */
+function updateProfilePhotoPreview(){
+  var img = $("profilePhotoPreview"), empty = $("profilePhotoEmpty");
+  if (!img || !empty) return;
+  var url = String(getPath(content, "hero.photo") || "").trim();
+  if (url){
+    if (img.getAttribute("src") !== url) img.setAttribute("src", url);
+    img.classList.remove("hidden");
+    empty.classList.add("hidden");
+  } else {
+    img.removeAttribute("src");
+    img.classList.add("hidden");
+    empty.classList.remove("hidden");
+    empty.textContent = "No custom photo saved yet — the main site is showing its built-in portrait. Upload a photo or paste a link, then press Save. / এখনো কাস্টম ছবি সেভ হয়নি — মূল সাইটে বিল্ট-ইন পোর্ট্রেটটাই দেখাচ্ছে।";
+  }
+}
+$("btnClearProfilePhoto").addEventListener("click", function(){
+  if (!String(getPath(content, "hero.photo") || "").trim()){
+    toast("No custom profile photo to remove — the built-in portrait is already in use.");
+    return;
+  }
+  setPath(content, "hero.photo", "");
+  markDirty(); renderAll();
+  var st = $("profilePhotoStatus");
+  if (st){ st.className = "upload-status warn";
+    st.textContent = "Custom photo removed in the editor — press Save so the main site goes back to the built-in portrait."; }
+  toast("Profile photo cleared — press Save to publish.");
+});
 
 /* ================= Contact test links + status preview ================= */
 function contactHref(kind, v){
@@ -1159,6 +1222,7 @@ editor.addEventListener("input", function(e){
     var bp = t.getAttribute("data-bind");
     setPath(content, bp, t.value); markDirty();
     refreshLangWarnings();
+    if (bp === "hero.photo") updateProfilePhotoPreview();
     if (bp.indexOf("contact.") === 0) updateContactTests();
     if (bp.indexOf("status.") === 0) updateStatusNow();
     if (/\.color$/.test(bp)){
@@ -1177,6 +1241,7 @@ editor.addEventListener("change", function(e){
   if (t.hasAttribute("data-bind")){
     setPath(content, t.getAttribute("data-bind"), t.value); markDirty();
     refreshLangWarnings();
+    if (t.getAttribute("data-bind") === "hero.photo") updateProfilePhotoPreview();
     if (t.getAttribute("data-bind").indexOf("status.") === 0) updateStatusNow();
   }
   if (t.hasAttribute("data-bind-check")){ setPath(content, t.getAttribute("data-bind-check"), t.checked); markDirty(); }
@@ -1187,6 +1252,7 @@ editor.addEventListener("change", function(e){
     if (txt) txt.value = t.value;
   }
   if (t.hasAttribute("data-upload")) handleUpload(t);
+  if (t.hasAttribute("data-profile-upload")) handleProfileUpload(t);
 });
 var BLANKS = {
   "hero.stats": function(){ return { value: "", label: L("","") }; },
@@ -1309,9 +1375,76 @@ function handleUpload(input){
   }
 }
 
+/* ================= Profile photo upload: Storage first, data-URL fallback =================
+   Same pattern as sample photos, but the result lands on hero.photo — the
+   one profile portrait the main site shows in the hub centre and at the
+   top of every profile view. */
+function handleProfileUpload(input){
+  var file = input.files && input.files[0]; if (!file) return;
+  var statusEl = $("profilePhotoStatus");
+  function say(cls, msg){ if (statusEl){ statusEl.className = "upload-status " + cls; statusEl.textContent = msg; } }
+  if (!file.type || file.type.indexOf("image/") !== 0){ say("err", "That file is not an image. / ওটা ছবির ফাইল নয়।"); return; }
+
+  function useDataUrl(){
+    var reader = new FileReader();
+    reader.onload = function(){
+      var dataUrl = String(reader.result);
+      /* downscale big photos so the database copy stays small */
+      var img = new Image();
+      img.onload = function(){
+        var maxSide = 1140, w = img.width, h = img.height;
+        if (Math.max(w, h) > maxSide){
+          var s = maxSide / Math.max(w, h); w = Math.round(w * s); h = Math.round(h * s);
+          var c = document.createElement("canvas"); c.width = w; c.height = h;
+          c.getContext("2d").drawImage(img, 0, 0, w, h);
+          dataUrl = c.toDataURL("image/jpeg", 0.85);
+        }
+        finish(dataUrl, true);
+      };
+      img.onerror = function(){ finish(dataUrl, true); };
+      img.src = dataUrl;
+    };
+    reader.onerror = function(){ say("err", "Could not read that file."); };
+    reader.readAsDataURL(file);
+  }
+  function finish(url, isDataUrl){
+    setPath(content, "hero.photo", url);
+    markDirty(); renderAll();
+    input.value = "";
+    var newStatus = $("profilePhotoStatus");
+    if (isDataUrl){
+      var kb = Math.round(url.length * 3 / 4 / 1024);
+      if (newStatus){ newStatus.className = "upload-status warn";
+        newStatus.textContent = "Saved inside the database as an embedded photo (~" + kb +
+          " KB). Warning: large embedded photos slow the site — under ~700 KB is best. Press Save to publish."; }
+      toast("Profile photo embedded in database (Storage unavailable). Press Save.");
+    } else {
+      if (newStatus){ newStatus.className = "upload-status ok";
+        newStatus.textContent = "Uploaded to Firebase Storage ✓ Press Save to publish the new profile photo."; }
+      toast("Profile photo uploaded to Storage ✓ Press Save.");
+    }
+  }
+  if (storage){
+    say("", "Uploading profile photo to Firebase Storage…");
+    var safeName = Date.now() + "-" + file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    var ref = storage.ref("portfolio/profile/" + safeName);
+    ref.put(file).then(function(){ return ref.getDownloadURL(); }).then(function(url){
+      finish(url, false);
+    }).catch(function(){
+      say("warn", "Storage upload failed — saving the photo inside the database instead…");
+      useDataUrl();
+    });
+  } else {
+    say("warn", "Firebase Storage is not available — saving the photo inside the database instead…");
+    useDataUrl();
+  }
+}
+
 /* ================= Admin UI language toggle (labels only; content stays EN + বাংলা side by side) ================= */
 var I18N = {
   en: { previewH: "Main portfolio site", heroH: "Hero / headline area", statsH: "Stat cards",
+    profilePhotoH: "Profile photo",
+    profilePhotoHint: "The portrait shown in the centre of the hub and at the top of every profile on the main site. Upload a new photo or paste an image link, then press Save — the photo is stored in Firebase (portfolio/content, hero.photo) together with everything else.",
     contactH: "Contact details", bannerH: "Headline / banner items", profilesH: "Sectors / profiles",
     previewHint: "Paste your live portfolio address here to preview it. This admin site is separate — the portfolio itself has no admin button and never links here.",
     heroHint: "Name, title and intro shown at the top of the portfolio. Fill both English and বাংলা — the main site's language switch uses these.",
@@ -1322,6 +1455,8 @@ var I18N = {
     footNote: "Saving writes everything to Firebase (portfolio/content). The main portfolio reads the same place and updates in real time for every visitor — no need to re-upload the portfolio file.",
     langBtn: "বাংলা" },
   bn: { previewH: "মূল পোর্টফোলিও সাইট", heroH: "হিরো / হেডলাইন অংশ", statsH: "স্ট্যাট কার্ড",
+    profilePhotoH: "প্রোফাইল ছবি",
+    profilePhotoHint: "মূল সাইটে হাবের মাঝখানে আর প্রতিটা প্রোফাইলের উপরে দেখানো পোর্ট্রেট ছবি। নতুন ছবি আপলোড করুন অথবা ছবির লিংক বসান, তারপর Save চাপুন — ছবিটা বাকি সবকিছুর সাথে Firebase-এ (portfolio/content, hero.photo) সেভ হয়।",
     contactH: "যোগাযোগের তথ্য", bannerH: "হেডলাইন / ব্যানার আইটেম", profilesH: "সেক্টর / প্রোফাইল",
     previewHint: "লাইভ পোর্টফোলিওর ঠিকানা এখানে বসালে প্রিভিউ খুলতে পারবেন। এই অ্যাডমিন সাইট আলাদা — মূল পোর্টফোলিওতে কোনো অ্যাডমিন বাটন নেই।",
     heroHint: "পোর্টফোলিওর একদম উপরে দেখানো নাম, টাইটেল ও পরিচিতি। English ও বাংলা দুটোই পূরণ করুন — মূল সাইটের ভাষা বদলের বাটন এগুলোই ব্যবহার করে।",
